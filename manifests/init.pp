@@ -253,7 +253,7 @@ class ssh (
           $default_sshd_config_tcp_keepalive          = 'yes'
           $default_sshd_config_permittunnel           = 'no'
         }
-        /^9.*/: {
+        /^(9|10).*/: {
           $default_sshd_config_hostkey = [
             '/etc/ssh/ssh_host_rsa_key',
             '/etc/ssh/ssh_host_ecdsa_key',
