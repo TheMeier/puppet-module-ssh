@@ -64,7 +64,7 @@ Boolean to merges all found instances of ssh::keys and ssh::config_entries in Hi
 This is useful for specifying SSH keys at different levels of the hierarchy and having
 them all included in the catalog.
 
-This will default to 'true' in future versions.
+This will default to true in future versions.
 
 - *Default*: false
 
@@ -79,7 +79,7 @@ Note that existing names and addresses in known hosts files will not be converte
 but may be manually hashed using ssh-keygen. Use of this option may break facilities such as
 tab-completion that rely on being able to read unhashed host names from ~/.ssh/known_hosts.
 
-A value of 'unset' will not add this parameter to the configuration file.
+A value of undef will not add this parameter to the configuration file.
 
 - *Default*: 'USE_DEFAULTS'
 
@@ -159,7 +159,7 @@ ssh_sendenv
 -------------
 Boolean to enable SendEnv options for specifying environment variables. Default is set to true on Linux.
 
-- *Default*: 'USE_DEFAULTS'
+- *Default*: undef
 
 ssh_gssapiauthentication
 -------------------------
@@ -427,7 +427,7 @@ X11Forwarding in sshd_config. Specifies whether X11 forwarding is permitted.
 
 sshd_x11_use_localhost
 ----------------------
-X11UseLocalhost in sshd_config. Specifies if sshd should bind the X11 forwarding server 
+X11UseLocalhost in sshd_config. Specifies if sshd should bind the X11 forwarding server
 to the loopback address or to the wildcard address.
 
 - *Default*: 'yes'
@@ -571,7 +571,7 @@ integers separated by colons, such as '10:30:100'.
 sshd_config_maxsessions
 -----------------------
 Specifies the maximum number of open sessions permitted per network connection.
-A value of 'unset' or undef will not add this parameter to the configuration file.
+A value of undef or undef will not add this parameter to the configuration file.
 
 - *Default*: undef
 
@@ -607,7 +607,7 @@ ssh::sshd_config_match:
 
 sshd_config_hostcertificate
 ---------------------------
-An Absolute Path or Array of Absolute Paths to the Host CA Public Key. Each entry *MUST* be tied 1:1 to a Host CA Private Key (see [sshd_config_hostkey](#sshd_config_hostkey))
+An Array of Absolute Paths to the Host CA Public Key. Each entry *MUST* be tied 1:1 to a Host CA Private Key (see [sshd_config_hostkey](#sshd_config_hostkey))
 
 - *Default*: undefined
 
@@ -684,7 +684,7 @@ ssh_package_source
 ------------------
 Source to SSH packages.
 
-- *Default*: 'USE_DEFAULTS'
+- *Default*: undef
 
 ssh_package_adminfile
 ---------------------
@@ -702,7 +702,7 @@ sshd_gssapikeyexchange
 ----------------------
 GSSAPIKeyExchange: Enables/disables GSS-API-authenticated key exchanges. Valid values are 'yes', 'no', and undef.
 
-- *Default*: 'USE_DEFAULTS'
+- *Default*: undef
 
 sshd_pamauthenticationviakbdint
 -------------------------------
@@ -858,9 +858,9 @@ UserKnownHostsFile.
 
 manage_root_ssh_config
 ----------------------
-Manage SSH config of root. Valid values are 'true' and 'false'.
+Manage SSH config of root. Valid values are true and false.
 
-- *Default*: 'false'
+- *Default*: false
 
 root_ssh_config_content
 -----------------------

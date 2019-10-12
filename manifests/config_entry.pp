@@ -3,13 +3,13 @@
 # Manage an entry in ~/.ssh/config for a particular user.  Lines model the lines
 # in each Host block.
 define ssh::config_entry (
-  $owner,
-  $group,
-  $path,
-  $host,
-  $order  = '10',
-  $ensure = 'present',
-  $lines  = [],
+  String                   $owner,
+  String                   $group,
+  String                   $path,
+  String                   $host,
+  Variant[String, Integer] $order  = '10',
+  String                   $ensure = 'present',
+  Array[String]            $lines  = [],
 ) {
 
   # All lines including the host line.  This will be joined with "\n  " for
