@@ -14,7 +14,7 @@
 # default value.
 
 #Port 22
-<% @sshd_config_port_array.each do |p| -%>
+<% @sshd_config_port.each do |p| -%>
 <%= "Port #{p}" %>
 <% end -%>
 #Protocol 2,1
@@ -230,7 +230,11 @@ AllowAgentForwarding <%= @sshd_config_allowagentforwarding %>
 
 # no default banner path
 #Banner none
+<% if @sshd_config_banner -%>
 Banner <%= @sshd_config_banner %>
+<% else -%>
+Banner none
+<% end -%>
 
 <% if @sshd_config_xauth_location_real -%>
 #XAuthLocation /usr/bin/xauth
@@ -261,21 +265,19 @@ AllowUsers <%= @sshd_config_allowusers_real.join(' ') %>
 <% if @sshd_config_allowgroups_real != [] -%>
 AllowGroups <%= @sshd_config_allowgroups_real.join(' ') %>
 <% end -%>
-<% if @sshd_config_key_revocation_list_real -%>
-RevokedKeys <%= @sshd_config_key_revocation_list_real %>
+<% if @sshd_config_key_revocation_list -%>
+RevokedKeys <%= @sshd_config_key_revocation_list %>
 <% end -%>
 <% if @sshd_config_hostcertificate_real.class == Array -%>
 <%   @sshd_config_hostcertificate_real.each do |cert| -%>
 HostCertificate <%= cert %>
 <%   end -%>
-<% elsif @sshd_config_hostcertificate_real.class == String -%>
-HostCertificate <%= @sshd_config_hostcertificate_real %>
 <% end -%>
-<% if @sshd_config_trustedusercakeys_real -%>
-TrustedUserCAKeys <%= @sshd_config_trustedusercakeys_real %>
+<% if @sshd_config_trustedusercakeys -%>
+TrustedUserCAKeys <%= @sshd_config_trustedusercakeys %>
 <% end -%>
-<% if @sshd_config_authorized_principals_file_real -%>
-AuthorizedPrincipalsFile <%= @sshd_config_authorized_principals_file_real %>
+<% if @sshd_config_authorized_principals_file -%>
+AuthorizedPrincipalsFile <%= @sshd_config_authorized_principals_file %>
 <% end -%>
 <% if @sshd_config_match -%>
 

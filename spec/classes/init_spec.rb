@@ -390,7 +390,7 @@ describe 'ssh' do
 
   context 'with default params on invalid osfamily' do
     let(:facts) { default_facts.merge(osfamily: 'C64') }
-    let(:params) { { manage_root_ssh_config: 'invalid' } }
+    let(:params) { { manage_root_ssh_config: false } }
 
     it 'fails' do
       expect {
@@ -476,7 +476,7 @@ describe 'ssh' do
   context 'with params used in sshd_config set on valid osfamily' do
     let(:params) do
       {
-        sshd_config_port: '22222',
+        sshd_config_port: [22_222],
         sshd_config_syslog_facility: 'DAEMON',
         sshd_config_login_grace_time: '60',
         permit_root_login: 'no',
@@ -646,18 +646,6 @@ describe 'ssh' do
         it { is_expected.to contain_file('sshd_config').with_content(%r{^ChrootDirectory #{value}$}) }
       end
     end
-
-    [true, 'invalid', 'invalid/path/', 3, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "set to invalid #{value} (as #{value.class})" do
-        let(:params) { { 'sshd_config_chrootdirectory' => value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{is not an absolute path})
-        end
-      end
-    end
   end
 
   describe 'sshd_config_forcecommand param' do
@@ -666,18 +654,6 @@ describe 'ssh' do
         let(:params) { { 'sshd_config_forcecommand' => value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^ForceCommand #{value}$}) }
-      end
-    end
-
-    [true, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "set to invalid #{value} (as #{value.class})" do
-        let(:params) { { 'sshd_config_forcecommand' => value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{is not a string})
-        end
       end
     end
   end
@@ -694,18 +670,6 @@ describe 'ssh' do
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^Match Addresss 2.4.2.0\n  PasswordAuthentication no\n  X11Forwarding yes\nMatch User JohnDoe\n  AllowTcpForwarding yes\Z}) }
     end
-
-    [true, 'string', 3, 2.42, ['array']].each do |value|
-      context "set to invalid #{value} (as #{value.class})" do
-        let(:params) { { 'sshd_config_match' => value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{is not a Hash})
-        end
-      end
-    end
   end
 
   describe 'sshd_config_print_last_log param' do
@@ -714,16 +678,6 @@ describe 'ssh' do
         let(:params) { { sshd_config_print_last_log: value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^PrintLastLog #{value}$}) }
-      end
-    end
-
-    context 'when set to an invalid value' do
-      let(:params) { { sshd_config_print_last_log: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_print_last_log may be either \'yes\' or \'no\' and is set to <invalid>\.})
       end
     end
   end
@@ -757,15 +711,6 @@ describe 'ssh' do
   end
 
   describe 'sshd_loglevel param' do
-    context 'when set to an invalid value' do
-      let(:params) { { 'sshd_config_loglevel' => 'BOGON' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{"BOGON" does not match})
-      end
-    end
     ['QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE'].each do |supported_val|
       context "when set to #{supported_val}" do
         let(:params) { { 'sshd_config_loglevel' => supported_val } }
@@ -783,28 +728,9 @@ describe 'ssh' do
         it { is_expected.to contain_file('sshd_config').with_content(%r{^KerberosAuthentication #{value}$}) }
       end
     end
-
-    context 'set to invalid value on valid osfamily' do
-      let(:params) { { sshd_kerberos_authentication: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_kerberos_authentication may be either \'yes\' or \'no\' and is set to <invalid>\.})
-      end
-    end
   end
 
   context 'when ssh_config_template has a nonstandard value' do
-    context 'and that value is not valid' do
-      let(:params) { { 'ssh_config_template' => false } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not a string})
-      end
-    end
     context 'and that value is valid' do
       let(:params) { { 'ssh_config_template' => 'ssh/sshd_config.erb' } }
 
@@ -815,15 +741,6 @@ describe 'ssh' do
   end
 
   context 'when sshd_config_template has a nonstandard value' do
-    context 'and that value is not valid' do
-      let(:params) { { 'sshd_config_template' => false } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not a string})
-      end
-    end
     context 'and that value is valid' do
       let(:params) { { 'sshd_config_template' => 'ssh/ssh_config.erb' } }
 
@@ -833,49 +750,37 @@ describe 'ssh' do
     end
   end
 
-  ['true', true].each do |value|
-    context "with manage_root_ssh_config set to #{value} on valid osfamily" do
-      let(:params) { { manage_root_ssh_config: value } }
+  context 'with manage_root_ssh_config set to true on valid osfamily' do
+    let(:params) { { manage_root_ssh_config: true } }
 
-      it { is_expected.to compile.with_all_deps }
-
-      it { is_expected.to contain_class('ssh') }
-
-      it { is_expected.to contain_class('common') }
-
-      it {
-        is_expected.to contain_file('root_ssh_dir').with('ensure' => 'directory',
-                                                         'path'    => '/root/.ssh',
-                                                         'owner'   => 'root',
-                                                         'group'   => 'root',
-                                                         'mode'    => '0700',
-                                                         'require' => 'Common::Mkdir_p[/root/.ssh]')
-      }
-
-      it {
-        is_expected.to contain_file('root_ssh_config').with('ensure' => 'file',
-                                                            'path'   => '/root/.ssh/config',
-                                                            'owner'  => 'root',
-                                                            'group'  => 'root',
-                                                            'mode'   => '0600')
-      }
-    end
+    it { is_expected.to compile.with_all_deps }
+    it { is_expected.to contain_class('ssh') }
+    it { is_expected.to contain_class('common') }
+    it {
+      is_expected.to contain_file('root_ssh_dir').with('ensure' => 'directory',
+                                                       'path'    => '/root/.ssh',
+                                                       'owner'   => 'root',
+                                                       'group'   => 'root',
+                                                       'mode'    => '0700',
+                                                       'require' => 'Common::Mkdir_p[/root/.ssh]')
+    }
+    it {
+      is_expected.to contain_file('root_ssh_config').with('ensure' => 'file',
+                                                          'path'   => '/root/.ssh/config',
+                                                          'owner'  => 'root',
+                                                          'group'  => 'root',
+                                                          'mode'   => '0600')
+    }
   end
 
-  ['false', false].each do |value|
-    context "with manage_root_ssh_config set to #{value} on valid osfamily" do
-      let(:params) { { manage_root_ssh_config: value } }
+  context 'with manage_root_ssh_config set to false on valid osfamily' do
+    let(:params) { { manage_root_ssh_config: false } }
 
-      it { is_expected.to compile.with_all_deps }
-
-      it { is_expected.to contain_class('ssh') }
-
-      it { is_expected.not_to contain_class('common') }
-
-      it { is_expected.not_to contain_file('root_ssh_dir') }
-
-      it { is_expected.not_to contain_file('root_ssh_config') }
-    end
+    it { is_expected.to compile.with_all_deps }
+    it { is_expected.to contain_class('ssh') }
+    it { is_expected.not_to contain_class('common') }
+    it { is_expected.not_to contain_file('root_ssh_dir') }
+    it { is_expected.not_to contain_file('root_ssh_config') }
   end
 
   [true, 'invalid'].each do |ciphers|
@@ -927,25 +832,11 @@ describe 'ssh' do
   end
 
   describe 'with ssh_config_hash_known_hosts param' do
-    ['yes', 'no', 'unset'].each do |value|
+    ['yes', 'no'].each do |value|
       context "set to #{value}" do
         let(:params) { { ssh_config_hash_known_hosts: value } }
 
-        if value == 'unset'
-          it { is_expected.to contain_file('ssh_config').without_content(%r{^\s*HashKnownHosts}) }
-        else
-          it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*HashKnownHosts #{value}$}) }
-        end
-      end
-    end
-
-    context 'when set to an invalid value' do
-      let(:params) { { ssh_config_hash_known_hosts: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::ssh_config_hash_known_hosts may be either \'yes\', \'no\' or \'unset\' and is set to <invalid>\.})
+        it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*HashKnownHosts #{value}$}) }
       end
     end
   end
@@ -974,82 +865,12 @@ describe 'ssh' do
     end
   end
 
-  [true, 'invalid'].each do |denyusers|
-    context "with sshd_config_denyusers set to invalid value #{denyusers}" do
-      let(:params) { { sshd_config_denyusers: denyusers } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an Array})
-      end
-    end
-  end
-
-  [true, 'invalid'].each do |denygroups|
-    context "with sshd_config_denygroups set to invalid value #{denygroups}" do
-      let(:params) { { sshd_config_denygroups: denygroups } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an Array})
-      end
-    end
-  end
-
-  [true, 'invalid'].each do |allowusers|
-    context "with sshd_config_allowusers set to invalid value #{allowusers}" do
-      let(:params) { { sshd_config_allowusers: allowusers } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an Array})
-      end
-    end
-  end
-
-  [true, 'invalid'].each do |allowgroups|
-    context "with sshd_config_allowgroups set to invalid value #{allowgroups}" do
-      let(:params) { { sshd_config_allowgroups: allowgroups } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an Array})
-      end
-    end
-  end
-
-  [true, 'invalid'].each do |macs|
-    context "with sshd_config_macs set to invalid value #{macs}" do
-      let(:params) { { sshd_config_macs: macs } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error)
-      end
-    end
-  end
-
   describe 'with sshd_config_permitemptypasswords' do
     ['yes', 'no'].each do |value|
       context "set to #{value}" do
         let(:params) { { 'sshd_config_permitemptypasswords' => value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^PermitEmptyPasswords #{value}$}) }
-      end
-    end
-
-    context 'set to invalid value on valid osfamily' do
-      let(:params) { { sshd_config_permitemptypasswords: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_permitemptypasswords may be either \'yes\' or \'no\' and is set to <invalid>\.})
       end
     end
   end
@@ -1062,16 +883,6 @@ describe 'ssh' do
         it { is_expected.to contain_file('sshd_config').with_content(%r{^PermitUserEnvironment #{value}$}) }
       end
     end
-
-    context 'set to invalid value on valid osfamily' do
-      let(:params) { { sshd_config_permituserenvironment: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_permituserenvironment may be either \'yes\' or \'no\' and is set to <invalid>\.})
-      end
-    end
   end
 
   describe 'sshd_config_compression param' do
@@ -1082,45 +893,25 @@ describe 'ssh' do
         it { is_expected.to contain_file('sshd_config').with_content(%r{^Compression #{value}$}) }
       end
     end
-
-    context 'when set to an invalid value' do
-      let(:params) { { sshd_config_compression: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_compression may be either \'yes\', \'no\' or \'delayed\' and is set to <invalid>\.})
-      end
-    end
   end
 
   describe 'sshd_config_port param' do
     context 'when set to an array' do
-      let(:params) { { 'sshd_config_port' => ['22222', '22223'] } }
+      let(:params) { { 'sshd_config_port' => [22_222, 22_223] } }
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^Port 22222\nPort 22223$}) }
     end
 
     context 'when set to a string' do
-      let(:params) { { 'sshd_config_port' => '22222' } }
+      let(:params) { { 'sshd_config_port' => [22_222] } }
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^Port 22222$}) }
     end
 
     context 'when set to an integer' do
-      let(:params) { { 'sshd_config_port' => 22_222 } }
+      let(:params) { { 'sshd_config_port' => [22_222] } }
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^Port 22222$}) }
-    end
-
-    context 'when not set to a valid number' do
-      let(:params) { { 'sshd_config_port' => '22invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_port must be a valid number and is set to <22invalid>\.})
-      end
     end
   end
 
@@ -1136,51 +927,27 @@ describe 'ssh' do
         end
       end
     end
-
-    context 'when set to an invalid value' do
-      let(:params) { { sshd_config_permittunnel: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_permittunnel may be either \'yes\', \'point-to-point\', \'ethernet\', \'no\' or \'unset\' and is set to <invalid>\.})
-      end
-    end
   end
 
   describe 'sshd_config_key_revocation_list param' do
-    ['/path/to', 'unset'].each do |value|
-      context "set to #{value}" do
-        let(:params) { { sshd_config_key_revocation_list: value } }
+    context 'set to /path/to' do
+      let(:params) { { sshd_config_key_revocation_list: '/path/to' } }
 
-        if value == 'unset'
-          it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*RevokedKeys}) }
-        else
-          it { is_expected.to contain_file('sshd_config').with_content(%r{^RevokedKeys #{value}$}) }
-        end
-      end
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^RevokedKeys /path/to$}) }
     end
 
-    context 'when set to an invalid value' do
-      let(:params) { { sshd_config_key_revocation_list: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{while evaluating a Function Call|is not an absolute path})
-      end
+    context 'not set' do
+      it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*RevokedKeys}) }
     end
   end
 
   describe 'sshd_config_hostcertificate param' do
     context 'unset value' do
-      let(:params) { { sshd_config_hostcertificate: 'unset' } }
-
       it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*HostCertificate}) }
     end
 
     context 'with a certificate' do
-      let(:params) { { sshd_config_hostcertificate: '/etc/ssh/ssh_host_key-cert.pub' } }
+      let(:params) { { sshd_config_hostcertificate: ['/etc/ssh/ssh_host_key-cert.pub'] } }
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^HostCertificate \/etc\/ssh\/ssh_host_key-cert\.pub}) }
     end
@@ -1192,113 +959,23 @@ describe 'ssh' do
     end
   end
 
-  context 'with sshd_config_hostcertificate set to invalid value on valid osfamily' do
-    context 'with string' do
-      let(:params) { { sshd_config_hostcertificate: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{"invalid" is not an absolute path})
-      end
-    end
-  end
-
   context 'with sshd_config_authorized_principals_file param' do
-    ['unset', '.ssh/authorized_principals'].each do |value|
-      context "set to #{value}" do
-        let(:params) { { sshd_config_authorized_principals_file: value } }
+    context 'set to .ssh/authorized_principals' do
+      let(:params) { { sshd_config_authorized_principals_file: '.ssh/authorized_principals' } }
 
-        if value == 'unset'
-          it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*AuthorizedPrincipalsFile}) }
-        else
-          it { is_expected.to contain_file('sshd_config').with_content(%r{^AuthorizedPrincipalsFile \.ssh\/authorized_principals}) }
-        end
-      end
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^AuthorizedPrincipalsFile \.ssh\/authorized_principals}) }
+    end
+
+    context 'not set' do
+      it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*AuthorizedPrincipalsFile}) }
     end
   end
 
   describe 'sshd_config_trustedusercakeys param' do
-    ['unset', '/etc/ssh/authorized_users_ca.pub', 'none'].each do |value|
-      context "set to #{value}" do
-        let(:params) { { sshd_config_trustedusercakeys: value } }
+    context 'set to /etc/ssh/authorized_users_ca.pub' do
+      let(:params) { { sshd_config_trustedusercakeys: '/etc/ssh/authorized_users_ca.pub' } }
 
-        if value == 'unset'
-          it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*TrustedUserCAKeys}) }
-        else
-          it { is_expected.to contain_file('sshd_config').with_content(%r{^TrustedUserCAKeys #{value}}) }
-        end
-      end
-    end
-  end
-
-  context 'with sshd_config_trustedusercakeys set to invalid value on valid osfamily' do
-    let(:params) { { sshd_config_trustedusercakeys: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{"invalid" is not an absolute path})
-    end
-  end
-
-  context 'with manage_root_ssh_config set to invalid value on valid osfamily' do
-    let(:params) { { manage_root_ssh_config: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{Unknown type of boolean})
-    end
-  end
-
-  context 'with sshd_password_authentication set to invalid value on valid osfamily' do
-    let(:params) { { sshd_password_authentication: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{ssh::sshd_password_authentication may be either \'yes\' or \'no\' and is set to <invalid>\.})
-    end
-  end
-
-  context 'with sshd_allow_tcp_forwarding set to invalid value on valid osfamily' do
-    let(:params) { { sshd_allow_tcp_forwarding: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{ssh::sshd_allow_tcp_forwarding may be either \'yes\' or \'no\' and is set to <invalid>\.})
-    end
-  end
-
-  context 'with sshd_x11_forwarding set to invalid value on valid osfamily' do
-    let(:params) { { sshd_x11_forwarding: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{ssh::sshd_x11_forwarding may be either \'yes\' or \'no\' and is set to <invalid>\.})
-    end
-  end
-
-  context 'with sshd_x11_use_localhost set to invalid value on valid osfamily' do
-    let(:params) { { sshd_x11_use_localhost: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{ssh::sshd_x11_use_localhost may be either \'yes\' or \'no\' and is set to <invalid>\.})
-    end
-  end
-
-  context 'with sshd_use_pam set to invalid value on valid osfamily' do
-    let(:params) { { sshd_use_pam: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{ssh::sshd_use_pam may be either \'yes\' or \'no\' and is set to <invalid>\.})
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^TrustedUserCAKeys /etc/ssh/authorized_users_ca.pub}) }
     end
   end
 
@@ -1332,46 +1009,6 @@ describe 'ssh' do
     end
   end
 
-  context 'with sshd_config_banner set to invalid value on valid osfamily' do
-    let(:params) { { sshd_config_banner: 'invalid/path' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{is not an absolute path})
-    end
-  end
-
-  context 'with sshd_config_authkey_location set to invalid value on valid osfamily' do
-    let(:params) { { sshd_config_authkey_location: false } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{is not a string})
-    end
-  end
-
-  context 'with sshd_config_hostkey set to invalid value on valid osfamily' do
-    let(:params) { { sshd_config_hostkey: false } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{is not an Array})
-    end
-  end
-
-  context 'with sshd_config_hostkey set to invalid path on valid osfamily' do
-    let(:params) { { sshd_config_hostkey: ['not_a_path'] } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{is not an absolute path.})
-    end
-  end
-
   describe 'with sshd_config_allowagentforwarding' do
     ['yes', 'no'].each do |value|
       context "set to #{value}" do
@@ -1379,46 +1016,6 @@ describe 'ssh' do
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^AllowAgentForwarding #{value}$}) }
       end
-    end
-
-    context 'set to invalid value on valid osfamily' do
-      let(:params) { { sshd_config_allowagentforwarding: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_allowagentforwarding may be either \'yes\' or \'no\' and is set to <invalid>\.})
-      end
-    end
-  end
-
-  context 'with sshd_config_strictmodes set to invalid value on valid osfamily' do
-    let(:params) { { sshd_config_strictmodes: 'invalid' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{ssh::sshd_config_strictmodes may be either \'yes\' or \'no\' and is set to <invalid>\.})
-    end
-  end
-
-  context 'with sshd_authorized_keys_command specified with an invalid path' do
-    let(:params) { { sshd_authorized_keys_command: 'invalid/path' } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{"invalid\/path" is not an absolute path})
-    end
-  end
-
-  context 'with sshd_authorized_keys_command_user specified with an invalid type (non-string)' do
-    let(:params) { { sshd_authorized_keys_command_user: ['invalid', 'type'] } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{\["invalid", "type"\] is not a string})
     end
   end
 
@@ -1430,24 +1027,6 @@ describe 'ssh' do
         is_expected.to contain_class('ssh')
       }.to raise_error(Puppet::Error, %r{ssh::sshd_config_banner must be set to be able to use sshd_banner_content\.})
     end
-  end
-
-  context 'with ssh_config_sendenv_xmodifiers set to invalid type, array' do
-    let(:params) { { ssh_config_sendenv_xmodifiers: ['invalid', 'type'] } }
-
-    it 'fails' do
-      expect {
-        is_expected.to contain_class('ssh')
-      }.to raise_error(Puppet::Error, %r{ssh::ssh_config_sendenv_xmodifiers type must be true or false\.})
-    end
-  end
-
-  context 'with ssh_config_sendenv_xmodifiers set to stringified \'true\'' do
-    let(:params) { { ssh_config_sendenv_xmodifiers: 'true' } }
-
-    it { is_expected.to compile.with_all_deps }
-
-    it { is_expected.to contain_file('ssh_config').with_content(%r{^  SendEnv XMODIFIERS$}) }
   end
 
   context 'with manage_firewall set to true on valid osfamily' do
@@ -1594,30 +1173,16 @@ describe 'ssh' do
       end
     end
 
-    context 'as an invalid string' do
-      let(:params) { { hiera_merge: 'invalid_string' } }
+    context 'as true with hiera data getting collected' do
+      let(:facts) { default_facts.merge(fqdn: 'hieramerge.example.com') }
+      let(:params) { { hiera_merge: true } }
 
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::hiera_merge may be either 'true' or 'false' and is set to <invalid_string>.})
-      end
-    end
-
-    ['true', true].each do |value|
-      context "as #{value} with hiera data getting collected" do
-        let(:facts) { default_facts.merge(fqdn: 'hieramerge.example.com') }
-        let(:params) { { hiera_merge: value } }
-
-        it { is_expected.to compile.with_all_deps }
-
-        it { is_expected.to contain_class('ssh') }
-
-        it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*DenyUsers denyuser_from_fqdn}) }
-        it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*DenyGroups denygroup_from_fqdn}) }
-        it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*AllowUsers allowuser_from_fqdn}) }
-        it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*AllowGroups allowgroup_from_fqdn}) }
-      end
+      it { is_expected.to compile.with_all_deps }
+      it { is_expected.to contain_class('ssh') }
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*DenyUsers denyuser_from_fqdn}) }
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*DenyGroups denygroup_from_fqdn}) }
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*AllowUsers allowuser_from_fqdn}) }
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*AllowGroups allowgroup_from_fqdn}) }
     end
 
     context 'as true with with hiera data getting merged through levels' do
@@ -1660,14 +1225,11 @@ describe 'ssh' do
       it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*AllowGroups}) }
     end
 
-    ['false', false].each do |value|
-      context "as #{value}" do
-        let(:params) { { hiera_merge: value } }
+    context 'as false' do
+      let(:params) { { hiera_merge: false } }
 
-        it { is_expected.to compile.with_all_deps }
-
-        it { is_expected.to contain_class('ssh') }
-      end
+      it { is_expected.to compile.with_all_deps }
+      it { is_expected.to contain_class('ssh') }
     end
   end
 
@@ -1684,17 +1246,6 @@ describe 'ssh' do
         }
       end
     end
-
-    context 'as an invalid path' do
-      let(:facts) { default_solaris_facts }
-      let(:params) { { ssh_package_adminfile: 'invalid/path' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an absolute path})
-      end
-    end
   end
 
   describe 'with sshd_config_xauth_location parameter specified' do
@@ -1702,16 +1253,6 @@ describe 'ssh' do
       let(:params) { { sshd_config_xauth_location: '/opt/ssh/bin/xauth' } }
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^XAuthLocation \/opt\/ssh\/bin\/xauth$}) }
-    end
-
-    context 'as an invalid path' do
-      let(:params) { { sshd_config_xauth_location: 'invalid/path' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an absolute path})
-      end
     end
 
     context 'as an invalid type' do
@@ -1740,16 +1281,6 @@ describe 'ssh' do
       end
     end
 
-    context 'as an invalid path' do
-      let(:params) { { ssh_package_source: 'invalid/path' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an absolute path})
-      end
-    end
-
     context 'as an invalid type' do
       let(:params) { { ssh_package_source: true } }
 
@@ -1775,18 +1306,6 @@ describe 'ssh' do
 
       it { is_expected.not_to contain_file('ssh_config').with_content(%r{^\s*ForwardX11Trusted}) }
     end
-
-    ['YES', true].each do |value|
-      context "specified an invalid value #{value}" do
-        let(:params) { { ssh_config_forward_x11_trusted: value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::ssh_config_forward_x11_trusted may be either 'yes' or 'no' and is set to <#{value}>\.})
-        end
-      end
-    end
   end
 
   describe 'with parameter ssh_gssapidelegatecredentials' do
@@ -1796,18 +1315,6 @@ describe 'ssh' do
         let(:params) { { ssh_gssapidelegatecredentials: value } }
 
         it { is_expected.to contain_file('ssh_config').with_content(%r{^GSSAPIDelegateCredentials #{value}$}) }
-      end
-    end
-
-    ['YES', true].each do |value|
-      context "specified an invalid value #{value}" do
-        let(:params) { { ssh_gssapidelegatecredentials: value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::ssh_gssapidelegatecredentials may be either 'yes' or 'no' and is set to <#{value}>\.})
-        end
       end
     end
   end
@@ -1820,24 +1327,6 @@ describe 'ssh' do
         it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*GSSAPIAuthentication #{value}$}) }
       end
     end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { ssh_gssapiauthentication: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        elsif value.is_a?(Hash)
-          value = '{ha => sh}'
-        end
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::ssh_gssapiauthentication may be either 'yes' or 'no' and is set to <#{Regexp.escape(value.to_s)}>\.})
-        end
-      end
-    end
   end
 
   describe 'with parameter ssh_hostbasedauthentication' do
@@ -1846,24 +1335,6 @@ describe 'ssh' do
         let(:params) { { ssh_hostbasedauthentication: value } }
 
         it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*HostbasedAuthentication #{value}$}) }
-      end
-    end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { ssh_hostbasedauthentication: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        elsif value.is_a?(Hash)
-          value = '{ha => sh}'
-        end
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::ssh_hostbasedauthentication may be either 'yes' or 'no' and is set to <#{Regexp.escape(value.to_s)}>\.})
-        end
       end
     end
   end
@@ -1876,24 +1347,6 @@ describe 'ssh' do
         it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*StrictHostKeyChecking #{value}$}) }
       end
     end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { ssh_strict_host_key_checking: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        elsif value.is_a?(Hash)
-          value = '{ha => sh}'
-        end
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::ssh_strict_host_key_checking may be 'yes', 'no' or 'ask' and is set to <#{Regexp.escape(value.to_s)}>\.})
-        end
-      end
-    end
   end
 
   describe 'with parameter ssh_enable_ssh_keysign' do
@@ -1904,24 +1357,6 @@ describe 'ssh' do
         it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*EnableSSHKeysign #{value}$}) }
       end
     end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { ssh_enable_ssh_keysign: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        elsif value.is_a?(Hash)
-          value = '{ha => sh}'
-        end
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::ssh_enable_ssh_keysign may be either 'yes' or 'no' and is set to <#{Regexp.escape(value.to_s)}>\.})
-        end
-      end
-    end
   end
 
   describe 'with parameter sshd_gssapiauthentication' do
@@ -1930,24 +1365,6 @@ describe 'ssh' do
         let(:params) { { sshd_gssapiauthentication: value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^GSSAPIAuthentication #{value}$}) }
-      end
-    end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { sshd_gssapiauthentication: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        elsif value.is_a?(Hash)
-          value = '{ha => sh}'
-        end
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_gssapiauthentication may be either 'yes' or 'no' and is set to <#{Regexp.escape(value.to_s)}>\.})
-        end
       end
     end
   end
@@ -1964,18 +1381,6 @@ describe 'ssh' do
     context 'not specified' do
       it { is_expected.not_to contain_file('sshd_config').with_content(%r{^\s*GSSAPIKeyExchange}) }
     end
-
-    ['YES', true].each do |value|
-      context "specified an invalid value #{value}" do
-        let(:params) { { sshd_gssapikeyexchange: value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_gssapikeyexchange may be either 'yes' or 'no' and is set to <#{value}>\.})
-        end
-      end
-    end
   end
 
   describe 'with parameter sshd_pamauthenticationviakbdint' do
@@ -1989,18 +1394,6 @@ describe 'ssh' do
 
     context 'not specified' do
       it { is_expected.not_to contain_file('sshd_config').with_content(%r{^\s*PAMAuthenticationViaKBDInt}) }
-    end
-
-    ['YES', true].each do |value|
-      context "specified an invalid value #{value}" do
-        let(:params) { { sshd_pamauthenticationviakbdint: value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_pamauthenticationviakbdint may be either 'yes' or 'no' and is set to <#{value}>\.})
-        end
-      end
     end
   end
 
@@ -2018,55 +1411,19 @@ describe 'ssh' do
 
       it { is_expected.not_to contain_file('sshd_config').with_content(%r{^\s*GSSAPICleanupCredentials}) }
     end
-
-    ['YES', true].each do |value|
-      context "specified an invalid value #{value}" do
-        let(:params) { { sshd_gssapicleanupcredentials: value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_gssapicleanupcredentials may be either 'yes' or 'no' and is set to <#{value}>\.})
-        end
-      end
-    end
   end
 
   describe 'with parameter ssh_sendenv specified' do
-    ['true', true].each do |value|
-      context "as #{value}" do
-        let(:params) { { ssh_sendenv: value } }
+    context 'as true' do
+      let(:params) { { ssh_sendenv: true } }
 
-        it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*SendEnv}) }
-      end
+      it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*SendEnv}) }
     end
 
-    ['false', false].each do |value|
-      context "as #{value}" do
-        let(:params) { { ssh_sendenv: value } }
+    context 'as false' do
+      let(:params) { { ssh_sendenv: false } }
 
-        it { is_expected.not_to contain_file('ssh_config').with_content(%r{^\s*SendEnv}) }
-      end
-    end
-
-    context 'as an invalid string' do
-      let(:params) { { ssh_sendenv: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::ssh_sendenv may be either 'true' or 'false' and is set to <invalid>\.})
-      end
-    end
-
-    context 'as an invalid type' do
-      let(:params) { { ssh_sendenv: ['invalid', 'type'] } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::ssh_sendenv type must be true or false\.})
-      end
+      it { is_expected.not_to contain_file('ssh_config').with_content(%r{^\s*SendEnv}) }
     end
   end
 
@@ -2076,15 +1433,6 @@ describe 'ssh' do
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^MaxAuthTries 6$}) }
     end
-    context 'as an invalid type' do
-      let(:params) { { sshd_config_maxauthtries: 'BOGUS' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_maxauthtries must be a valid number and is set to <BOGUS>\.})
-      end
-    end
   end
 
   describe 'with parameter sshd_config_maxstartups specified' do
@@ -2093,18 +1441,6 @@ describe 'ssh' do
         let(:params) { { sshd_config_maxstartups: value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^MaxStartups #{value}$}) }
-      end
-    end
-
-    ['10a', true, '10:30:1a'].each do |value|
-      context "as an invalid string - #{value}" do
-        let(:params) { { sshd_config_maxstartups: value } }
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_config_maxstartups may be either an integer or three integers separated with colons, such as 10:30:100\. Detected value is <#{value}>\.})
-        end
       end
     end
 
@@ -2119,70 +1455,34 @@ describe 'ssh' do
     end
   end
 
-  describe 'with parameter sshd_config_maxsessions specified' do
+  describe 'parameter sshd_config_maxsessions' do
     context 'as a valid integer' do
       let(:params) { { sshd_config_maxsessions: 10 } }
 
       it { is_expected.to contain_file('sshd_config').with_content(%r{^MaxSessions 10$}) }
     end
 
-    context 'as a valid string <unset>' do
-      let(:params) { { sshd_config_maxsessions: 'unset' } }
-
+    context 'without parameter' do
       it { is_expected.to contain_file('sshd_config').without_content(%r{^\s*MaxSessions}) }
-    end
-
-    context 'as an invalid type' do
-      let(:params) { { sshd_config_maxsessions: 'BOGUS' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error)
-      end
     end
   end
 
   describe 'with parameter sshd_acceptenv specified' do
-    ['true', true].each do |value|
-      context "as #{value}" do
-        let(:params) { { sshd_acceptenv: value } }
+    context 'as true' do
+      let(:params) { { sshd_acceptenv: true } }
 
-        it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*AcceptEnv}) }
-      end
+      it { is_expected.to contain_file('sshd_config').with_content(%r{^\s*AcceptEnv}) }
     end
 
-    ['false', false].each do |value|
-      context "as #{value}" do
-        let(:params) { { sshd_acceptenv: value } }
+    context 'as false' do
+      let(:params) { { sshd_acceptenv: false } }
 
-        it { is_expected.not_to contain_file('sshd_config').with_content(%r{^\s*AcceptEnv}) }
-      end
-    end
-
-    context 'as an invalid string' do
-      let(:params) { { sshd_acceptenv: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_acceptenv may be either 'true' or 'false' and is set to <invalid>\.})
-      end
-    end
-
-    context 'as an invalid type' do
-      let(:params) { { sshd_acceptenv: ['invalid', 'type'] } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_acceptenv type must be true or false\.})
-      end
+      it { is_expected.not_to contain_file('sshd_config').with_content(%r{^\s*AcceptEnv}) }
     end
   end
 
   describe 'with parameter service_hasstatus' do
-    ['true', true, 'false', false].each do |value|
+    [true, false].each do |value|
       context "specified as #{value}" do
         let(:params) { { service_hasstatus: value } }
 
@@ -2194,26 +1494,6 @@ describe 'ssh' do
                                                               'hasstatus'  => value,
                                                               'subscribe'  => 'File[sshd_config]')
         }
-      end
-    end
-
-    context 'specified as an invalid string' do
-      let(:params) { { service_hasstatus: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::service_hasstatus must be 'true' or 'false' and is set to <invalid>\.})
-      end
-    end
-
-    context 'specified as an invalid type' do
-      let(:params) { { service_hasstatus: ['invalid', 'type'] } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::service_hasstatus must be true or false\.})
       end
     end
   end
@@ -2233,26 +1513,6 @@ describe 'ssh' do
 
       it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*GlobalKnownHostsFile \/valid\/path$}) }
     end
-
-    context 'specified as an invalid path' do
-      let(:params) { { ssh_config_global_known_hosts_file: 'invalid/path' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{\"invalid\/path\" is not an absolute path\.})
-      end
-    end
-
-    context 'specified as an invalid type' do
-      let(:params) { { ssh_config_global_known_hosts_file: { 'invalid' => 'type' } } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not an absolute path})
-      end
-    end
   end
 
   describe 'with parameter ssh_config_global_known_hosts_list' do
@@ -2261,32 +1521,6 @@ describe 'ssh' do
 
       it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*GlobalKnownHostsFile.*\/valid\/path1 \/valid\/path2$}) }
     end
-
-    context 'specified as an invalid path' do
-      let(:params) { { ssh_config_global_known_hosts_list: ['/valid/path', 'invalid/path'] } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{\"invalid\/path\" is not an absolute path\.})
-      end
-    end
-
-    ['YES', true, 2.42, _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { ssh_config_global_known_hosts_list: value } }
-
-        if value.is_a?(Hash)
-          value = '{ha => sh}'
-        end
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{is not an Array})
-        end
-      end
-    end
   end
 
   describe 'with parameter ssh_config_user_known_hosts_file' do
@@ -2294,22 +1528,6 @@ describe 'ssh' do
       let(:params) { { 'ssh_config_user_known_hosts_file' => ['valid/path1', '/valid/path2'] } }
 
       it { is_expected.to contain_file('ssh_config').with_content(%r{^\s*UserKnownHostsFile valid\/path1 \/valid\/path2$}) }
-    end
-
-    ['YES', true, 2.42, _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { ssh_config_user_known_hosts_file: value } }
-
-        if value.is_a?(Hash)
-          value = '{ha => sh}'
-        end
-
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{is not an Array})
-        end
-      end
     end
   end
 
@@ -2326,16 +1544,6 @@ describe 'ssh' do
                                                             'require' => ['Package[openssh-server]', 'Package[openssh-clients]'])
       }
     end
-
-    context 'specified as an invalid type [non-string]' do
-      let(:params) { { ssh_config_global_known_hosts_owner: ['invalid', 'type'] } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{\[\"invalid\", \"type\"\] is not a string\.  It looks to be a Array})
-      end
-    end
   end
 
   describe 'with parameter ssh_config_global_known_hosts_group' do
@@ -2350,16 +1558,6 @@ describe 'ssh' do
                                                             'mode'   => '0644',
                                                             'require' => ['Package[openssh-server]', 'Package[openssh-clients]'])
       }
-    end
-
-    context 'specified as an invalid type [non-string]' do
-      let(:params) { { ssh_config_global_known_hosts_group: ['invalid', 'type'] } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{\[\"invalid\", \"type\"\] is not a string\.  It looks to be a Array})
-      end
     end
   end
 
@@ -2377,77 +1575,26 @@ describe 'ssh' do
       }
     end
 
-    ['666', '0842', '06666'].each do |value|
-      context "specified as invalid mode - #{value}" do
-        let(:params) { { ssh_config_global_known_hosts_mode: value } }
+    context 'as true' do
+      let(:params) { { ssh_key_import: true } }
 
-        it 'fails' do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::ssh_config_global_known_hosts_mode must be a valid 4 digit mode in octal notation\. Detected value is <#{value}>\.})
-        end
-      end
+      it { is_expected.to compile.with_all_deps }
+      it { is_expected.to contain_class('ssh') }
+      it {
+        is_expected.to contain_file('ssh_known_hosts').with('ensure' => 'file',
+                                                            'path'    => '/etc/ssh/ssh_known_hosts',
+                                                            'owner'   => 'root',
+                                                            'group'   => 'root',
+                                                            'mode'    => '0644',
+                                                            'require' => ['Package[openssh-server]', 'Package[openssh-clients]'])
+      }
     end
 
-    context 'specified as an invalid type [non-string]' do
-      let(:params) { { ssh_config_global_known_hosts_mode: ['invalid', 'type'] } }
+    context 'as false' do
+      let(:params) { { ssh_key_import: false } }
 
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::ssh_config_global_known_hosts_mode must be a valid 4 digit mode in octal notation\. Detected value is <[\[]?invalid.*type[\]]?})
-      end
-    end
-  end
-
-  describe 'with ssh_key_import parameter specified' do
-    context 'as a non-boolean or non-string' do
-      let(:params) { { ssh_key_import: ['not_a_boolean', 'or_a_string'] } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error)
-      end
-    end
-
-    context 'as an invalid string' do
-      let(:params) { { ssh_key_import: 'invalid_string' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::ssh_key_import may be either 'true' or 'false' and is set to <invalid_string>\.})
-      end
-    end
-
-    ['true', true].each do |value|
-      context "as #{value}" do
-        let(:params) { { ssh_key_import: value } }
-
-        it { is_expected.to compile.with_all_deps }
-
-        it { is_expected.to contain_class('ssh') }
-
-        it {
-          is_expected.to contain_file('ssh_known_hosts').with('ensure' => 'file',
-                                                              'path'    => '/etc/ssh/ssh_known_hosts',
-                                                              'owner'   => 'root',
-                                                              'group'   => 'root',
-                                                              'mode'    => '0644',
-                                                              'require' => ['Package[openssh-server]', 'Package[openssh-clients]'])
-        }
-      end
-    end
-
-    ['false', false].each do |value|
-      context "as #{value}" do
-        let(:params) { { ssh_key_import: value } }
-
-        it { is_expected.to compile.with_all_deps }
-
-        it { is_expected.to contain_class('ssh') }
-      end
+      it { is_expected.to compile.with_all_deps }
+      it { is_expected.to contain_class('ssh') }
     end
   end
 
@@ -2457,46 +1604,6 @@ describe 'ssh' do
         let(:params) { { sshd_hostbasedauthentication: value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^HostbasedAuthentication #{value}$}) }
-      end
-    end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { sshd_hostbasedauthentication: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        end
-
-        it do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_hostbasedauthentication may be either 'yes' or 'no' and is set to})
-        end
-      end
-    end
-  end
-
-  [true, 'invalid'].each do |pubkeyacceptedkeytypes|
-    context "with sshd_pubkeyacceptedkeytypes set to invalid value #{pubkeyacceptedkeytypes}" do
-      let(:params) { { sshd_pubkeyacceptedkeytypes: pubkeyacceptedkeytypes } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not})
-      end
-    end
-  end
-
-  [true, 'invalid'].each do |authenticationmethods|
-    context "with sshd_config_authenticationmethods set to invalid value #{authenticationmethods}" do
-      let(:params) { { sshd_config_authenticationmethods: authenticationmethods } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{is not})
       end
     end
   end
@@ -2509,22 +1616,6 @@ describe 'ssh' do
         it { is_expected.to contain_file('sshd_config').with_content(%r{^PubkeyAuthentication #{value}$}) }
       end
     end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { sshd_pubkeyauthentication: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        end
-
-        it do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_pubkeyauthentication may be either 'yes' or 'no' and is set to})
-        end
-      end
-    end
   end
 
   describe 'with parameter sshd_ignoreuserknownhosts' do
@@ -2533,22 +1624,6 @@ describe 'ssh' do
         let(:params) { { sshd_ignoreuserknownhosts: value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^IgnoreUserKnownHosts #{value}$}) }
-      end
-    end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { sshd_ignoreuserknownhosts: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        end
-
-        it do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_ignoreuserknownhosts may be either 'yes' or 'no' and is set to})
-        end
       end
     end
   end
@@ -2561,56 +1636,24 @@ describe 'ssh' do
         it { is_expected.to contain_file('sshd_config').with_content(%r{^IgnoreRhosts #{value}$}) }
       end
     end
-
-    ['YES', true, 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { sshd_ignorerhosts: value } }
-
-        if value.is_a?(Array)
-          value = value.join
-        end
-
-        it do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_ignorerhosts may be either 'yes' or 'no' and is set to})
-        end
-      end
-    end
   end
 
   describe 'with parameter manage_service' do
-    ['YES', 'badvalue', 2.42, ['array'], _a = { 'ha' => 'sh' }].each do |value|
-      context "specified as invalid value #{value} (as #{value.class})" do
-        let(:params) { { manage_service: value } }
+    context 'specified as true' do
+      let(:params) { { manage_service: true } }
 
-        it do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{(is not a boolean|Unknown type of boolean)})
-        end
-      end
+      it { is_expected.to contain_service('sshd_service') }
     end
 
-    ['true', true].each do |value|
-      context "specified as valid true value #{value} (as #{value.class})" do
-        let(:params) { { manage_service: value } }
+    context 'specified as false' do
+      let(:params) { { manage_service: false } }
 
-        it { is_expected.to contain_service('sshd_service') }
-      end
-    end
-
-    ['false', false].each do |value|
-      context "specified as valid false value #{value} (as #{value.class})" do
-        let(:params) { { manage_service: value } }
-
-        it { is_expected.not_to contain_service('sshd_service') }
-      end
+      it { is_expected.not_to contain_service('sshd_service') }
     end
   end
 
   describe 'sshd_config_tcp_keepalive param' do
-    ['yes', 'no', 'unset'].each do |value|
+    ['yes', 'no'].each do |value|
       context "set to #{value}" do
         let(:params) { { sshd_config_tcp_keepalive: value } }
 
@@ -2619,16 +1662,6 @@ describe 'ssh' do
         else
           it { is_expected.to contain_file('sshd_config').with_content(%r{^TCPKeepAlive #{value}$}) }
         end
-      end
-    end
-
-    context 'when set to an invalid value' do
-      let(:params) { { sshd_config_tcp_keepalive: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_tcp_keepalive may be either \'yes\', \'no\' or \'unset\' and is set to <invalid>\.})
       end
     end
   end
@@ -2641,16 +1674,6 @@ describe 'ssh' do
         it { is_expected.to contain_file('sshd_config').with_content(%r{^UsePrivilegeSeparation #{value}$}) }
       end
     end
-
-    context 'when set to an invalid value' do
-      let(:params) { { sshd_config_use_privilege_separation: 'invalid' } }
-
-      it 'fails' do
-        expect {
-          is_expected.to contain_class('ssh')
-        }.to raise_error(Puppet::Error, %r{ssh::sshd_config_use_privilege_separation may be either \'yes\', \'no\' or \'sandbox\' and is set to <invalid>\.})
-      end
-    end
   end
 
   describe 'with parameter sshd_addressfamily' do
@@ -2659,18 +1682,6 @@ describe 'ssh' do
         let(:params) { { sshd_addressfamily: value } }
 
         it { is_expected.to contain_file('sshd_config').with_content(%r{^AddressFamily #{value}$}) }
-      end
-    end
-
-    ['foo', 'bar', 123].each do |value|
-      context "specified as invalid value #{value}" do
-        let(:params) { { sshd_addressfamily: value } }
-
-        it do
-          expect {
-            is_expected.to contain_class('ssh')
-          }.to raise_error(Puppet::Error, %r{ssh::sshd_addressfamily can be undef, 'any', 'inet' or 'inet6' and is set to})
-        end
       end
     end
   end
@@ -2688,44 +1699,4 @@ describe 'ssh' do
       end
     end
   end
-
-  describe 'variable type and content validations' do
-    mandatory_params = {} if mandatory_params.nil?
-
-    validations = {
-      'hash' => {
-        name: ['config_entries'],
-        valid: [], # valid hashes are to complex to block test them here. types::mount should have its own spec tests anyway.
-        invalid: ['string', ['array'], 3, 2.42, true],
-        message: 'is not a Hash',
-      },
-      'regex (yes|no|unset)' => {
-        name: ['ssh_config_use_roaming'],
-        valid: ['yes', 'no', 'unset'],
-        invalid: ['string', ['array'], { 'ha' => 'sh' }, 3, 2.42, true, false, nil],
-        message: 'may be either \'yes\', \'no\' or \'unset\'',
-      },
-    }
-
-    validations.sort.each do |type, var|
-      var[:name].each do |var_name|
-        var[:params] = {} if var[:params].nil?
-        var[:valid].each do |valid|
-          context "when #{var_name} (#{type}) is set to valid #{valid} (as #{valid.class})" do
-            let(:params) { [mandatory_params, var[:params], { :"#{var_name}" => valid }].reduce(:merge) }
-
-            it { is_expected.to compile }
-          end
-        end
-
-        var[:invalid].each do |invalid|
-          context "when #{var_name} (#{type}) is set to invalid #{invalid} (as #{invalid.class})" do
-            let(:params) { [mandatory_params, var[:params], { :"#{var_name}" => invalid }].reduce(:merge) }
-
-            it { is_expected.to compile.and_raise_error(%r{#{var[:message]}}) }
-          end
-        end
-      end # var[:name].each
-    end # validations.sort.each
-  end # describe 'variable type and content validations'
 end
