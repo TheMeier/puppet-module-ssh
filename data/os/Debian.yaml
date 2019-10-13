@@ -1,0 +1,9 @@
+---
+
+ssh::packages:
+  - 'openssh-server'
+  - 'openssh-client'
+ssh::service_name: 'ssh'
+ssh::ssh_config_hash_known_hosts: 'yes'
+ssh::ssh_config_forward_x11_trusted: 'yes'
+ssh::sshd_config_subsystem_sftp: '/usr/lib/openssh/sftp-server'

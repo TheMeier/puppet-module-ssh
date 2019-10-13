@@ -2,3 +2,9 @@
 
 spec/spec_helper.rb:
   hiera_config: spec/fixtures/hiera/hiera.yaml
+
+spec/default_facts.yml.erb:
+  extra_facts:
+    ssh_version: 'OpenSSH_6.6.1p1'
+    root_home: '/root'
+

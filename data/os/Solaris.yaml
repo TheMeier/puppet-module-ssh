@@ -1,0 +1,20 @@
+---
+
+ssh::packages:
+  - 'SUNWsshcu'
+  - 'SUNWsshdr'
+  - 'SUNWsshdu'
+  - 'SUNWsshr'
+  - 'SUNWsshu'
+ssh::service_name: 'ssh'
+ssh::sshd_config_xauth_location: '/usr/openwin/bin/xauth'
+ssh::ssh_sendenv: false
+ssh::sshd_config_subsystem_sftp: '/usr/lib/ssh/sftp-server'
+ssh::sshd_config_mode: '0644'
+ssh::sshd_gssapikeyexchange: 'yes'
+ssh::sshd_config_hostkey:
+  - '/etc/ssh/ssh_host_rsa_key'
+ssh::sshd_pamauthenticationviakbdint: 'yes'
+ssh::sshd_acceptenv: false
+ssh::sshd_config_serverkeybits: '768'
+

@@ -460,7 +460,7 @@ sshd(8) will send a message through the encrypted channel to request a response 
 client. The default is 0, indicating that these messages will not be sent to the client.
 This option applies to protocol version 2 only.
 
-- *Default*: '0'
+- *Default*: 0
 
 sshd_client_alive_count_max
 --------------------------
@@ -476,7 +476,7 @@ become inactive. The default value is 3.  If ClientAliveInterval (see below) is 
 and ClientAliveCountMax is left at the default, unresponsive SSH clients will be disconnected
 after approximately 45 seconds.  This option applies to protocol version 2 only.
 
-- *Default*: '3'
+- *Default*: 3
 
 sshd_config_tcp_keepalive
 ------------------------
@@ -511,7 +511,6 @@ Specifies whether tun(4) device forwarding is allowed.  The argument must be 'ye
 Specifying 'yes' permits both 'point-to-point' and 'ethernet'.
 Independent of this setting, the permissions of the selected tun(4) device must
 allow access to the user.
-A value of 'unset' will not add this parameter to the configuration file.
 
 On Linux the default is set to ``no''.
 On Solaris the default is to not add this parameter to the configuration file.
