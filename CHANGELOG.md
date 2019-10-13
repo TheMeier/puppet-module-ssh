@@ -1,4 +1,4 @@
-### v4.0.0 -
+### v4.0.0 - 2019-10-13
   * convert to use pdk
   * use types
   * update list of supported OSes
