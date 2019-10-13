@@ -1,0 +1,16 @@
+---
+
+ssh::packages:
+  - 'openssh'
+ssh::ssh_config_hash_known_hosts: 'no'
+ssh::sshd_config_xauth_location: '/usr/bin/xauth'
+ssh::ssh_config_forward_x11_trusted: 'yes'
+ssh::sshd_config_subsystem_sftp: '/usr/lib/ssh/sftp-server'
+ssh::sshd_config_use_dns: 'yes'
+ssh::sshd_use_pam: 'yes'
+ssh::sshd_gssapicleanupcredentials: 'yes'
+ssh::sshd_config_serverkeybits: '1024'
+ssh::sshd_addressfamily: 'any'
+ssh::sshd_config_tcp_keepalive: 'yes'
+ssh::sshd_config_permittunnel: 'no'
+

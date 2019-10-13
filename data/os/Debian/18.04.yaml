@@ -1,0 +1,15 @@
+---
+
+ssh::sshd_config_use_dns: 'yes'
+ssh::sshd_use_pam: 'yes'
+ssh::sshd_config_hostkey:
+  - '/etc/ssh/ssh_host_rsa_key'
+  - '/etc/ssh/ssh_host_dsa_key'
+  - '/etc/ssh/ssh_host_ecdsa_key'
+  - '/etc/ssh/ssh_host_ed25519_key'
+ssh::sshd_gssapicleanupcredentials: 'yes'
+ssh::sshd_config_serverkeybits: '1024'
+ssh::sshd_addressfamily: 'any'
+ssh::sshd_config_tcp_keepalive: 'yes'
+ssh::sshd_config_permittunnel: 'no'
+

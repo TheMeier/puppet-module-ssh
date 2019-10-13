@@ -1,12 +1,13 @@
 ### v4.0.0 -
   * convert to use pdk
   * use types
+  * update list of supported OSes
   * BREAKING: manage_root_ssh_config doe not accept strings anymore
   * BREAKING: sshd_config_port requires an array of Stdlib::Port now
   * BREAKING: sshd_config_hostcertificate requires an array of Stdlib::Absolutepath now
   * BREAKING: ssh_config_sendenv_xmodifiers must be a Boolean now
   * BREAKING: hiera_merge must be a Boolean now
-  * BREAKING: ssh_config_hash_known_hosts,sshd_config_authorized_principals_file and sshd_config_tcp_keepalive do not support 'unset' anymore
+  * BREAKING: ssh_config_hash_known_hosts,sshd_config_authorized_principals_file,sshd_config_permittunnel and sshd_config_tcp_keepalive do not support 'unset' anymore
   * BREAKING: sshd_config_trustedusercakeys and sshd_config_key_revocation_list does not support 'unset' and 'none' anymore
 
 ### v3.62.0 - 2019-09-17

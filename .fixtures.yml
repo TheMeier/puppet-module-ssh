@@ -4,8 +4,6 @@ fixtures:
       repo: 'https://github.com/puppetlabs/puppetlabs-stdlib.git'
     concat:
       repo: 'https://github.com/puppetlabs/puppetlabs-concat.git'
-    common:
-      repo: 'https://github.com/ghoneycutt/puppet-module-common.git'
     firewall:
       repo: 'https://github.com/puppetlabs/puppetlabs-firewall.git'
     sshkeys:

@@ -19,9 +19,9 @@
 <% end -%>
 #Protocol 2,1
 Protocol 2
-<% if @sshd_addressfamily_real != nil -%>
+<% if @sshd_addressfamily != nil -%>
 #AddressFamily any
-AddressFamily <%= @sshd_addressfamily_real %>
+AddressFamily <%= @sshd_addressfamily %>
 <% end -%>
 <% if @sshd_listen_address.class == Array -%>
 <% @sshd_listen_address.each do |val| -%>
@@ -36,15 +36,15 @@ ListenAddress <%= @sshd_listen_address %>
 # HostKeys for protocol version 2
 #HostKey /etc/ssh/ssh_host_rsa_key
 #HostKey /etc/ssh/ssh_host_dsa_key
-<% @sshd_config_hostkey_real.each do |hostkey| -%>
+<% @sshd_config_hostkey.each do |hostkey| -%>
 HostKey <%= hostkey %>
 <% end -%>
 
 # Lifetime and size of ephemeral version 1 server key
 #KeyRegenerationInterval 1h
 #ServerKeyBits 1024
-<% if @sshd_config_serverkeybits_real != nil -%>
-ServerKeyBits <%= @sshd_config_serverkeybits_real %>
+<% if @sshd_config_serverkeybits != nil -%>
+ServerKeyBits <%= @sshd_config_serverkeybits %>
 <% end -%>
 # Logging
 # obsoletes QuietMode and FascistLogging
@@ -104,13 +104,13 @@ AuthenticationMethods <%= @sshd_config_authenticationmethods.join(',') %>
 # To disable tunneled clear text passwords, change to no here!
 #PasswordAuthentication yes
 PasswordAuthentication <%= @sshd_password_authentication %>
-<% if @sshd_pamauthenticationviakbdint_real != nil -%>
+<% if @sshd_pamauthenticationviakbdint != nil -%>
 # Use PAM via keyboard interactive method for authentication.
 # Depending on the setup of pam.conf(4) this may allow tunneled clear text
 # passwords even when PasswordAuthentication is set to no. This is dependent
 # on what the individual modules request and is out of the control of sshd
 # or the protocol.
-PAMAuthenticationViaKBDInt <%= @sshd_pamauthenticationviakbdint_real %>
+PAMAuthenticationViaKBDInt <%= @sshd_pamauthenticationviakbdint %>
 <% end -%>
 #PermitEmptyPasswords no
 <% if @sshd_config_permitemptypasswords != nil -%>
@@ -133,15 +133,15 @@ KerberosAuthentication <%= @sshd_kerberos_authentication %>
 # GSSAPI options
 #GSSAPIAuthentication no
 GSSAPIAuthentication <%= @sshd_gssapiauthentication %>
-<% if @sshd_gssapikeyexchange_real != nil -%>
-GSSAPIKeyExchange <%= @sshd_gssapikeyexchange_real %>
+<% if @sshd_gssapikeyexchange != nil -%>
+GSSAPIKeyExchange <%= @sshd_gssapikeyexchange %>
 <% end -%>
-<% if @sshd_gssapicleanupcredentials_real != nil -%>
+<% if @sshd_gssapicleanupcredentials != nil -%>
 #GSSAPICleanupCredentials yes
-GSSAPICleanupCredentials <%= @sshd_gssapicleanupcredentials_real %>
+GSSAPICleanupCredentials <%= @sshd_gssapicleanupcredentials %>
 <% end -%>
 
-<% if @sshd_use_pam_real != nil -%>
+<% if @sshd_use_pam != nil -%>
 # Set this to 'yes' to enable PAM authentication, account processing,
 # and session processing. If this is enabled, PAM authentication will
 # be allowed through the ChallengeResponseAuthentication mechanism.
@@ -151,10 +151,10 @@ GSSAPICleanupCredentials <%= @sshd_gssapicleanupcredentials_real %>
 # session checks to run without PAM authentication, then enable this but set
 # ChallengeResponseAuthentication=no
 #UsePAM no
-UsePAM <%= @sshd_use_pam_real %>
+UsePAM <%= @sshd_use_pam %>
 <% end -%>
 
-<% if @sshd_acceptenv_real == true -%>
+<% if @sshd_acceptenv == true -%>
 # Accept locale-related environment variables
 AcceptEnv LANG LC_CTYPE LC_NUMERIC LC_TIME LC_COLLATE LC_MONETARY LC_MESSAGES
 AcceptEnv LC_PAPER LC_NAME LC_ADDRESS LC_TELEPHONE LC_MEASUREMENT
@@ -175,8 +175,8 @@ PrintMotd <%= @sshd_config_print_motd %>
 PrintLastLog <%= @sshd_config_print_last_log %>
 <% end -%>
 #TCPKeepAlive yes
-<% if @sshd_config_tcp_keepalive_real != nil -%>
-TCPKeepAlive <%= @sshd_config_tcp_keepalive_real %>
+<% if @sshd_config_tcp_keepalive != nil -%>
+TCPKeepAlive <%= @sshd_config_tcp_keepalive %>
 <% end -%>
 #UseLogin no
 #UsePrivilegeSeparation yes
@@ -195,9 +195,9 @@ Compression <%= @sshd_config_compression %>
 ClientAliveInterval <%= @sshd_client_alive_interval %>
 ClientAliveCountMax <%= @sshd_client_alive_count_max %>
 #ShowPatchLevel no
-<% if @sshd_config_use_dns_real != nil -%>
+<% if @sshd_config_use_dns != nil -%>
 #UseDNS yes
-UseDNS <%= @sshd_config_use_dns_real %>
+UseDNS <%= @sshd_config_use_dns %>
 <% end -%>
 #PidFile /var/run/sshd.pid
 <% if @sshd_config_maxstartups -%>
@@ -212,8 +212,8 @@ MaxSessions <%= @sshd_config_maxsessions_integer %>
 <% end -%>
 
 #PermitTunnel no
-<% if @sshd_config_permittunnel_real != nil -%>
-PermitTunnel <%= @sshd_config_permittunnel_real %>
+<% if @sshd_config_permittunnel != nil -%>
+PermitTunnel <%= @sshd_config_permittunnel %>
 <% end -%>
 <% if @sshd_config_chrootdirectory -%>
 ChrootDirectory <%= @sshd_config_chrootdirectory %>
@@ -236,13 +236,13 @@ Banner <%= @sshd_config_banner %>
 Banner none
 <% end -%>
 
-<% if @sshd_config_xauth_location_real -%>
+<% if @sshd_config_xauth_location -%>
 #XAuthLocation /usr/bin/xauth
-XAuthLocation <%= @sshd_config_xauth_location_real %>
+XAuthLocation <%= @sshd_config_xauth_location %>
 
 <% end -%>
 # override default of no subsystems
-Subsystem sftp <%= @sshd_config_subsystem_sftp_real %>
+Subsystem sftp <%= @sshd_config_subsystem_sftp %>
 
 <% if @sshd_config_ciphers -%>
 Ciphers <%= @sshd_config_ciphers.join(',') %>
