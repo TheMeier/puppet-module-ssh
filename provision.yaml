@@ -1,0 +1,7 @@
+---
+travis_deb:
+  provisioner: docker
+  images: ['debian:10']
+travis_el:
+  provisioner: docker
+  images: ['centos:8']

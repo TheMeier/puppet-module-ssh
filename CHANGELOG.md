@@ -11,6 +11,7 @@
 - generate firewall rules for all port in `$sshd_config_port` instead of fixed port 22
 - add REFERENCE.md
 - use puppet strings for documentation
+- add basic acceptance test
 
 ## v4.0.0 - 2019-10-13
 
