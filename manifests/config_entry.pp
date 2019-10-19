@@ -1,15 +1,29 @@
-# == Define: ssh::config_entry
+# @summary Create config entries in a users' ~/.ssh/config
 #
-# Manage an entry in ~/.ssh/config for a particular user.  Lines model the lines
-# in each Host block.
+# @example Basic usage
+#   ssh::config_entry { 'jenkins github.com':
+#    host  => 'github.com',
+#    lines => ["  IdentityFile /home/jenkins/.ssh/jenkins-gihub.key"],
+#    order => '20',
+#   }
+#
+# @ see https://man.openbsd.org/ssh_config
+#
+# @param owner
+# @param group
+# @param path
+# @param host
+# @param order
+# @param ensure
+# @param lines
 define ssh::config_entry (
-  String                   $owner,
   String                   $group,
-  String                   $path,
   String                   $host,
-  Variant[String, Integer] $order  = '10',
+  String                   $owner,
+  String                   $path,
   String                   $ensure = 'present',
   Array[String]            $lines  = [],
+  Variant[String, Integer] $order  = '10',
 ) {
 
   # All lines including the host line.  This will be joined with "\n  " for

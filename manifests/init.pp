@@ -1,127 +1,252 @@
-# == Class: ssh
+# @summary install and manage SSH server and client
 #
-# Manage ssh client and server
+# @note default values for paramters are managed with hiera data, see files in the `data` directory.
+#   Paramters marked SSH_CONFIG(5) or SSHD_CONFIG(5) are directly used in the configuration as described
+#   by the corresponding openssh man page
 #
+# @example Basic usage
+#   include ::ssh
+#
+# @param config_entries parameter for ssh::config_entry factory
+# @param hiera_merge merge all found instances of ssh::keys and ssh::config_entries in hiera if true
+# @param keys keys for user's ~/.ssh/authorized_keys
+# @param manage_firewall enable/disable firewall rule for ports configured in `$sshd_config_port`
+# @param manage_root_ssh_config enable/disable management fo root users ssh_config
+# @param manage_service enable/disable management of sshd service
+# @param packages which packages to install
+# @param permit_root_login SSHD_CONFIG(5) PermitRootLogin
+# @param purge_keys enable/disable purging of all unmanaged ssh keys
+# @param root_ssh_config_content content of ssh config file for the root user
+# @param service_enable enable parameter for sshd service resource
+# @param service_ensure ensure parameter for sshd service resource
+# @param service_hasrestart hasrestart parameter for sshd service resource
+# @param service_hasstatus hasstatus parameter for sshd service resource
+# @param service_name name name parameter for sshd service resource
+# @param ssh_config_ciphers SSH_CONFIG(5) Ciphers
+# @param ssh_config_forward_agent SSH_CONFIG(5) ForwardAgent
+# @param ssh_config_forward_x11_trusted SSH_CONFIG(5) ForwardX11Trusted
+# @param ssh_config_forward_x11 SSH_CONFIG(5) ForwardX11
+# @param ssh_config_global_known_hosts_file SSH_CONFIG(5) GlobalKnownHostsFile
+# @param ssh_config_global_known_hosts_group group mode for GlobalKnownHostsFile
+# @param ssh_config_global_known_hosts_list extra elements to append to GlobalKnownHostsFile
+# @param ssh_config_global_known_hosts_mode file mode for GlobalKnownHostsFile
+# @param ssh_config_global_known_hosts_owner owner for GlobalKnownHostsFile
+# @param ssh_config_group group for ssh config file
+# @param ssh_config_hash_known_hosts SSH_CONFIG(5) HashKnownHosts
+# @param ssh_config_kexalgorithms SSH_CONFIG(5) KexAlgorithms
+# @param ssh_config_macs SSH_CONFIG(5) MACs
+# @param ssh_config_mode file mode for ssh config file
+# @param ssh_config_owner owner for ssh config file
+# @param ssh_config_path path for ssh config file
+# @param ssh_config_proxy_command SSH_CONFIG(5) ssh_config_proxy_command
+# @param ssh_config_sendenv_xmodifiers SSH_CONFIG(5) ssh_config_sendenv_xmodifiers
+# @param ssh_config_server_alive_interval SSH_CONFIG(5) ssh_config_server_alive_interval
+# @param ssh_config_template puppet template to use for ssh config
+# @param ssh_config_user_known_hosts_file SSH_CONFIG(5) UserKnownHostsFile
+# @param ssh_config_use_roaming SSH_CONFIG(5) UseRoaming
+# @param sshd_acceptenv enable/disable AcceptEnv options for specifying environment variables
+# @param sshd_addressfamily SSHD_CONFIG(5) sshd_addressfamily
+# @param sshd_allow_tcp_forwarding SSHD_CONFIG(5) sshd_allow_tcp_forwarding
+# @param sshd_authorized_keys_command SSHD_CONFIG(5) AuthorizedKeysCommand
+# @param sshd_authorized_keys_command_user SSHD_CONFIG(5) AuthorizedKeysCommandUser
+# @param sshd_banner_content content of ssh banner file
+# @param sshd_banner_group group of ssh banner file
+# @param sshd_banner_mode file mode of ssh banner file
+# @param sshd_banner_owner owner of ssh banner file
+# @param sshd_client_alive_count_max SSHD_CONFIG(5) ClientAliveCountMax
+# @param sshd_client_alive_interval SSHD_CONFIG(5) ClientAliveInterval
+# @param sshd_config_allowagentforwarding SSHD_CONFIG(5) AllowAgentForwarding
+# @param sshd_config_allowgroups SSHD_CONFIG(5) AllowGroups
+# @param sshd_config_allowusers SSHD_CONFIG(5) AllowUsers
+# @param sshd_config_authenticationmethods SSHD_CONFIG(5) AuthenticationMethods
+# @param sshd_config_authkey_location SSHD_CONFIG(5) AuthorizedKeysFile
+# @param sshd_config_authorized_principals_file SSHD_CONFIG(5) AuthorizedPrincipalsFile
+# @param sshd_config_banner SSHD_CONFIG(5) Banner
+# @param sshd_config_challenge_resp_auth SSHD_CONFIG(5) ChallengeResponseAuthentication
+# @param sshd_config_chrootdirectory SSHD_CONFIG(5) ChrootDirectory
+# @param sshd_config_ciphers SSHD_CONFIG(5) Ciphers
+# @param sshd_config_compression SSHD_CONFIG(5) Compression
+# @param sshd_config_denygroups SSHD_CONFIG(5) DenyGroups
+# @param sshd_config_denyusers SSHD_CONFIG(5) DenyUsers
+# @param sshd_config_forcecommand SSHD_CONFIG(5) DenyGroups
+# @param sshd_config_group group of sshd config file
+# @param sshd_config_hostcertificate SSHD_CONFIG(5) HostCertificate
+# @param sshd_config_hostkey SSHD_CONFIG(5) HostKey
+# @param sshd_config_kexalgorithms SSHD_CONFIG(5) KexAlgorithms
+# @param sshd_config_key_revocation_list SSHD_CONFIG(5) RevokedKeys
+# @param sshd_config_loglevel SSHD_CONFIG(5) LogLevel
+# @param sshd_config_login_grace_time SSHD_CONFIG(5) LoginGraceTime
+# @param sshd_config_macs SSHD_CONFIG(5) MACs
+# @param sshd_config_match SSHD_CONFIG(5) Hash for matches with nested arrays for options for the Match
+#   directive for the SSH daemon. Match directive is supported on SSH >= 5.x.
+# @param sshd_config_maxauthtries SSHD_CONFIG(5) MaxAuthTries
+# @param sshd_config_maxsessions SSHD_CONFIG(5) MaxSessions
+# @param sshd_config_maxstartups SSHD_CONFIG(5) MaxStartups
+# @param sshd_config_mode file mode of sshd config file
+# @param sshd_config_owner owner of sshd config file
+# @param sshd_config_path path of sshd config file
+# @param sshd_config_permitemptypasswords SSHD_CONFIG(5) PermitEmptyPasswords
+# @param sshd_config_permittunnel SSHD_CONFIG(5) PermitTunnel
+# @param sshd_config_permituserenvironment SSHD_CONFIG(5) PermitUserEnvironment
+# @param sshd_config_port SSHD_CONFIG(5) Port
+# @param sshd_config_print_last_log SSHD_CONFIG(5) PrintLastLog
+# @param sshd_config_print_motd SSHD_CONFIG(5) PrintMotd
+# @param sshd_config_serverkeybits SSHD_CONFIG(5) ServerKeyBits
+# @param sshd_config_strictmodes SSHD_CONFIG(5) StrictModes
+# @param sshd_config_subsystem_sftp SSHD_CONFIG(5) Subsystem
+# @param sshd_config_syslog_facility SSHD_CONFIG(5) SyslogFacility
+# @param sshd_config_tcp_keepalive SSHD_CONFIG(5) TCPKeepAlive
+# @param sshd_config_template SSHD_CONFIG(5) puppet template to use for sshd config file
+# @param sshd_config_trustedusercakeys SSHD_CONFIG(5) TrustedUserCAKeys
+# @param sshd_config_use_dns SSHD_CONFIG(5) UseDNS
+# @param sshd_config_use_privilege_separation SSHD_CONFIG(5) UsePrivilegeSeparation
+# @param sshd_config_xauth_location SSHD_CONFIG(5) XAuthLocation
+# @param sshd_gssapiauthentication SSHD_CONFIG(5) GSSAPIAuthentication
+# @param sshd_gssapicleanupcredentials SSHD_CONFIG(5) GSSAPICleanupCredentials
+# @param sshd_gssapikeyexchange SSHD_CONFIG(5) GSSAPIKeyExchange
+# @param sshd_hostbasedauthentication SSHD_CONFIG(5) HostbasedAuthentication
+# @param sshd_ignorerhosts SSHD_CONFIG(5) IgnoreRhosts
+# @param sshd_ignoreuserknownhosts SSHD_CONFIG(5) IgnoreUserKnownHosts
+# @param sshd_kerberos_authentication SSHD_CONFIG(5) KerberosAuthentication
+# @param sshd_listen_address SSHD_CONFIG(5) ListenAddress
+# @param sshd_pamauthenticationviakbdint SSHD_CONFIG(5) PAMAuthenticationViaKBDInt
+# @param sshd_password_authentication SSHD_CONFIG(5) PasswordAuthentication
+# @param sshd_pubkeyacceptedkeytypes SSHD_CONFIG(5) PubkeyAcceptedKeyTypes
+# @param sshd_pubkeyauthentication SSHD_CONFIG(5) PubkeyAuthentication
+# @param sshd_use_pam SSHD_CONFIG(5) UsePAM
+# @param sshd_x11_forwarding SSHD_CONFIG(5) X11Forwarding
+# @param sshd_x11_use_localhost SSHD_CONFIG(5) X11UseLocalhost
+# @param ssh_enable_ssh_keysign SSH_CONFIG(5) EnableSSHKeysign
+# @param ssh_gssapiauthentication SSH_CONFIG(5) GSSAPIAuthentication
+# @param ssh_gssapidelegatecredentials SSH_CONFIG(5) GSSAPIDelegateCredentials
+# @param ssh_hostbasedauthentication SSH_CONFIG(5) HostbasedAuthentication
+# @param ssh_key_ensure enable/disable to export node sshkey resource
+# @param ssh_key_import enable/disable to import all exported node sshkey resources
+# @param ssh_key_type encryption type for SSH key. Valid values are 'ecdsa-sha2-nistp256', 'rsa', 'dsa', 'ssh-dss' and 'ssh-rsa'
+# @param ssh_package_adminfile adminfile paramter for package resources
+# @param ssh_package_source source paramter for package resources
+# @param ssh_sendenv enable/disable of SendEnv options for specifying environment variables
+# @param ssh_strict_host_key_checking SSH_CONFIG(5) StrictHostKeyChecking
 class ssh (
+  Hash $config_entries = {},
   Boolean $hiera_merge = false,
+  Optional[Hash] $keys = undef,
+  Boolean $manage_firewall = false,
+  Boolean $manage_root_ssh_config = false,
+  Boolean $manage_service = true,
   Array[String] $packages = ['openssh-client', 'openssh-server'],
   Ssh::Permit_root_login $permit_root_login = 'yes',
   Boolean $purge_keys = true,
-  Boolean $manage_firewall = false,
-  Optional[Stdlib::Absolutepath] $ssh_package_source = undef,
-  Optional[Stdlib::Absolutepath] $ssh_package_adminfile = undef,
-  Optional[Ssh::Yes_no] $ssh_config_hash_known_hosts = undef,
-  String $ssh_config_path = '/etc/ssh/ssh_config',
-  String $ssh_config_owner = 'root',
-  String $ssh_config_group = 'root',
-  Stdlib::Filemode $ssh_config_mode = '0644',
-  Optional[String] $ssh_config_forward_x11 = undef,
-  Optional[Ssh::Yes_no] $ssh_config_forward_x11_trusted = undef,
-  Optional[String] $ssh_config_forward_agent = undef,
-  Optional[String] $ssh_config_server_alive_interval = undef,
-  Boolean $ssh_config_sendenv_xmodifiers = false,
-  Optional[Ssh::Yes_no] $ssh_hostbasedauthentication = undef,
-  Optional[String] $ssh_config_proxy_command = undef,
-  Optional[Enum['yes','no','ask']] $ssh_strict_host_key_checking = undef,
+  String $root_ssh_config_content = "# This file is being maintained by Puppet.\n# DO NOT EDIT\n",
+  Boolean $service_enable = true,
+  String $service_ensure = 'running',
+  Boolean $service_hasrestart = true,
+  Optional[Boolean] $service_hasstatus = true,
+  String $service_name = 'sshd',
   Optional[Array[String]] $ssh_config_ciphers = undef,
+  Optional[String] $ssh_config_forward_agent = undef,
+  Optional[Enum['yes','no']] $ssh_config_forward_x11_trusted = undef,
+  Optional[String] $ssh_config_forward_x11 = undef,
+  Stdlib::Absolutepath $ssh_config_global_known_hosts_file = '/etc/ssh/ssh_known_hosts',
+  String $ssh_config_global_known_hosts_group = 'root',
+  Optional[Array[Stdlib::Absolutepath]] $ssh_config_global_known_hosts_list = undef,
+  Stdlib::Filemode $ssh_config_global_known_hosts_mode = '0644',
+  String $ssh_config_global_known_hosts_owner = 'root',
+  String $ssh_config_group = 'root',
+  Optional[Enum['yes','no']] $ssh_config_hash_known_hosts = undef,
   Optional[Array[String]] $ssh_config_kexalgorithms = undef,
   Optional[Array[String]] $ssh_config_macs = undef,
-  Optional[Enum['yes','no','unset']] $ssh_config_use_roaming = undef,
+  Stdlib::Filemode $ssh_config_mode = '0644',
+  String $ssh_config_owner = 'root',
+  String $ssh_config_path = '/etc/ssh/ssh_config',
+  Optional[String] $ssh_config_proxy_command = undef,
+  Boolean $ssh_config_sendenv_xmodifiers = false,
+  Optional[String] $ssh_config_server_alive_interval = undef,
   String $ssh_config_template = 'ssh/ssh_config.erb',
-  Boolean $ssh_sendenv = true,
-  Optional[Ssh::Yes_no] $ssh_gssapiauthentication = 'yes',
-  Optional[Ssh::Yes_no] $ssh_gssapidelegatecredentials = undef,
-  String $sshd_config_path = '/etc/ssh/sshd_config',
-  String $sshd_config_owner = 'root',
-  String $sshd_config_group = 'root',
-  Ssh::Log_level $sshd_config_loglevel = 'INFO',
-  Stdlib::Filemode $sshd_config_mode = '0600',
-  Optional[Ssh::Yes_no] $sshd_config_permitemptypasswords = undef,
-  Optional[Ssh::Yes_no] $sshd_config_permituserenvironment = undef,
-  Optional[Enum['yes','no','delayed']] $sshd_config_compression = undef,
-  Array[Stdlib::Port] $sshd_config_port = [22],
-  Ssh::Syslog_facility $sshd_config_syslog_facility = 'AUTH',
-  String $sshd_config_template = 'ssh/sshd_config.erb',
-  String $sshd_config_login_grace_time = '120',
-  Ssh::Yes_no $sshd_config_challenge_resp_auth = 'yes',
-  Ssh::Yes_no $sshd_config_print_motd = 'yes',
-  Optional[Ssh::Yes_no] $sshd_config_print_last_log = undef,
-  Optional[Ssh::Yes_no] $sshd_config_use_dns = undef,
-  Optional[String] $sshd_config_authkey_location = undef,
-  Optional[Ssh::Yes_no] $sshd_config_strictmodes = undef,
-  Optional[String] $sshd_config_serverkeybits = undef,
-  Optional[Stdlib::Absolutepath] $sshd_config_banner = undef,
-  Optional[Array[String]] $sshd_config_ciphers = undef,
-  Optional[Array[String]] $sshd_config_kexalgorithms = undef,
-  Optional[Array[String]] $sshd_config_macs = undef,
-  Optional[Ssh::Yes_no] $ssh_enable_ssh_keysign = undef,
-  Array[String] $sshd_config_allowgroups = [],
-  Array[String] $sshd_config_allowusers = [],
-  Array[String] $sshd_config_denygroups = [],
-  Array[String] $sshd_config_denyusers = [],
-  Optional[Integer] $sshd_config_maxauthtries = undef,
-  Optional[Pattern[/^((\d+)|(\d+?:\d+?:\d+)?)$/]] $sshd_config_maxstartups = undef,
-  Optional[Integer] $sshd_config_maxsessions = undef,
-  Optional[Stdlib::Absolutepath] $sshd_config_chrootdirectory = undef,
-  Optional[String] $sshd_config_forcecommand = undef,
-  Optional[Hash] $sshd_config_match = undef,
+  Optional[Array[String]] $ssh_config_user_known_hosts_file = undef,
+  Optional[Enum['yes','no','unset']] $ssh_config_use_roaming = undef,
+  Boolean $sshd_acceptenv = true,
+  Optional[Pattern[/^(any|inet|inet6)$/]] $sshd_addressfamily = undef,
+  Enum['yes','no'] $sshd_allow_tcp_forwarding = 'yes',
   Optional[Stdlib::Absolutepath] $sshd_authorized_keys_command = undef,
   Optional[String] $sshd_authorized_keys_command_user = undef,
   Optional[String] $sshd_banner_content = undef,
-  String $sshd_banner_owner = 'root',
   String $sshd_banner_group = 'root',
   Stdlib::Filemode $sshd_banner_mode = '0644',
-  Optional[Stdlib::Absolutepath] $sshd_config_xauth_location = undef,
-  String $sshd_config_subsystem_sftp = '/usr/lib/openssh/sftp-server',
-  Optional[Ssh::Yes_no] $sshd_kerberos_authentication = undef,
-  Ssh::Yes_no $sshd_password_authentication = 'yes',
-  Ssh::Yes_no $sshd_allow_tcp_forwarding = 'yes',
-  Ssh::Yes_no $sshd_x11_forwarding = 'yes',
-  Ssh::Yes_no $sshd_x11_use_localhost = 'yes',
-  Optional[Ssh::Yes_no] $sshd_use_pam = undef,
+  String $sshd_banner_owner = 'root',
   Integer $sshd_client_alive_count_max = 3,
   Integer $sshd_client_alive_interval = 0,
-  Ssh::Yes_no $sshd_gssapiauthentication = 'yes',
-  Optional[Ssh::Yes_no] $sshd_gssapikeyexchange = undef,
-  Optional[Ssh::Yes_no] $sshd_pamauthenticationviakbdint = undef,
-  Optional[Ssh::Yes_no] $sshd_gssapicleanupcredentials = undef,
-  Boolean $sshd_acceptenv = true,
-  Optional[Array[Stdlib::Absolutepath]] $sshd_config_hostkey = ['/etc/ssh/ssh_host_rsa_key'],
-  Optional[Array[String]] $sshd_listen_address = undef,
-  Ssh::Yes_no $sshd_hostbasedauthentication = 'no',
-  Optional[Array[String]] $sshd_pubkeyacceptedkeytypes = undef,
-  Ssh::Yes_no $sshd_pubkeyauthentication = 'yes',
-  Ssh::Yes_no $sshd_ignoreuserknownhosts = 'no',
-  Ssh::Yes_no $sshd_ignorerhosts = 'yes',
+  Optional[Enum['yes','no']] $sshd_config_allowagentforwarding = undef,
+  Array[String] $sshd_config_allowgroups = [],
+  Array[String] $sshd_config_allowusers = [],
   Optional[Array[String]] $sshd_config_authenticationmethods = undef,
-  Boolean $manage_service = true,
-  Optional[Pattern[/^(any|inet|inet6)$/]] $sshd_addressfamily = undef,
-  String $service_ensure = 'running',
-  String $service_name = 'sshd',
-  Boolean $service_enable = true,
-  Boolean $service_hasrestart = true,
-  Optional[Boolean] $service_hasstatus = true,
+  Optional[String] $sshd_config_authkey_location = undef,
+  Optional[String] $sshd_config_authorized_principals_file = undef,
+  Optional[Stdlib::Absolutepath] $sshd_config_banner = undef,
+  String $sshd_config_challenge_resp_auth = 'yes',
+  Optional[Stdlib::Absolutepath] $sshd_config_chrootdirectory = undef,
+  Optional[Array[String]] $sshd_config_ciphers = undef,
+  Optional[Enum['yes','no','delayed']] $sshd_config_compression = undef,
+  Array[String] $sshd_config_denygroups = [],
+  Array[String] $sshd_config_denyusers = [],
+  Optional[String] $sshd_config_forcecommand = undef,
+  String $sshd_config_group = 'root',
+  Optional[Array[Stdlib::Absolutepath]] $sshd_config_hostcertificate = undef,
+  Optional[Array[Stdlib::Absolutepath]] $sshd_config_hostkey = ['/etc/ssh/ssh_host_rsa_key'],
+  Optional[Array[String]] $sshd_config_kexalgorithms = undef,
+  Optional[Stdlib::Absolutepath] $sshd_config_key_revocation_list = undef,
+  Enum['QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE'] $sshd_config_loglevel = 'INFO',
+  String $sshd_config_login_grace_time = '120',
+  Optional[Array[String]] $sshd_config_macs = undef,
+  Optional[Hash] $sshd_config_match = undef,
+  Optional[Integer] $sshd_config_maxauthtries = undef,
+  Optional[Integer] $sshd_config_maxsessions = undef,
+  Optional[Pattern[/^((\d+)|(\d+?:\d+?:\d+)?)$/]] $sshd_config_maxstartups = undef,
+  Stdlib::Filemode $sshd_config_mode = '0600',
+  String $sshd_config_owner = 'root',
+  String $sshd_config_path = '/etc/ssh/sshd_config',
+  Optional[Enum['yes','no']] $sshd_config_permitemptypasswords = undef,
+  Optional[Enum['yes','no','point-to-point','ethernet']] $sshd_config_permittunnel = undef,
+  Optional[Enum['yes','no']] $sshd_config_permituserenvironment = undef,
+  Array[Stdlib::Port] $sshd_config_port = [22],
+  Optional[Enum['yes','no']] $sshd_config_print_last_log = undef,
+  String $sshd_config_print_motd = 'yes',
+  Optional[String] $sshd_config_serverkeybits = undef,
+  Optional[Enum['yes','no']] $sshd_config_strictmodes = undef,
+  String $sshd_config_subsystem_sftp = '/usr/lib/openssh/sftp-server',
+  String $sshd_config_syslog_facility = 'AUTH',
+  Optional[Enum['yes','no']] $sshd_config_tcp_keepalive              = undef,
+  String $sshd_config_template = 'ssh/sshd_config.erb',
+  Optional[Stdlib::Absolutepath] $sshd_config_trustedusercakeys = undef,
+  Optional[Enum['yes','no']] $sshd_config_use_dns = undef,
+  Optional[Enum['yes','no','sandbox']] $sshd_config_use_privilege_separation   = undef,
+  Optional[Stdlib::Absolutepath] $sshd_config_xauth_location = undef,
+  Enum['yes','no'] $sshd_gssapiauthentication = 'yes',
+  Optional[Enum['yes','no']] $sshd_gssapicleanupcredentials = undef,
+  Optional[Enum['yes','no']] $sshd_gssapikeyexchange = undef,
+  Enum['yes','no'] $sshd_hostbasedauthentication = 'no',
+  Enum['yes','no'] $sshd_ignorerhosts = 'yes',
+  Enum['yes','no'] $sshd_ignoreuserknownhosts = 'no',
+  Optional[Enum['yes','no']] $sshd_kerberos_authentication = undef,
+  Optional[Array[String]] $sshd_listen_address = undef,
+  Optional[Enum['yes','no']] $sshd_pamauthenticationviakbdint = undef,
+  Enum['yes','no'] $sshd_password_authentication = 'yes',
+  Optional[Array[String]] $sshd_pubkeyacceptedkeytypes = undef,
+  Enum['yes','no'] $sshd_pubkeyauthentication = 'yes',
+  Optional[Enum['yes','no']] $sshd_use_pam = undef,
+  Enum['yes','no'] $sshd_x11_forwarding = 'yes',
+  Enum['yes','no'] $sshd_x11_use_localhost = 'yes',
+  Optional[Enum['yes','no']] $ssh_enable_ssh_keysign = undef,
+  Optional[Enum['yes','no']] $ssh_gssapiauthentication = 'yes',
+  Optional[Enum['yes','no']] $ssh_gssapidelegatecredentials = undef,
+  Optional[Enum['yes','no']] $ssh_hostbasedauthentication = undef,
   String $ssh_key_ensure = 'present',
   Boolean $ssh_key_import = true,
   String $ssh_key_type = 'ssh-rsa',
-  Stdlib::Absolutepath $ssh_config_global_known_hosts_file = '/etc/ssh/ssh_known_hosts',
-  Optional[Array[Stdlib::Absolutepath]] $ssh_config_global_known_hosts_list = undef,
-  String $ssh_config_global_known_hosts_owner = 'root',
-  String $ssh_config_global_known_hosts_group = 'root',
-  Stdlib::Filemode $ssh_config_global_known_hosts_mode = '0644',
-  Optional[Array[String]] $ssh_config_user_known_hosts_file = undef,
-  Hash $config_entries = {},
-  Optional[Hash] $keys = undef,
-  Boolean $manage_root_ssh_config = false,
-  String $root_ssh_config_content = "# This file is being maintained by Puppet.\n# DO NOT EDIT\n",
-  Optional[Ssh::Yes_no] $sshd_config_tcp_keepalive              = undef,
-  Optional[Enum['yes','no','sandbox']] $sshd_config_use_privilege_separation   = undef,
-  Optional[Enum['yes','no','point-to-point','ethernet']] $sshd_config_permittunnel = undef,
-  Optional[Array[Stdlib::Absolutepath]] $sshd_config_hostcertificate = undef,
-  Optional[Stdlib::Absolutepath] $sshd_config_trustedusercakeys = undef,
-  Optional[Stdlib::Absolutepath] $sshd_config_key_revocation_list = undef,
-  Optional[String] $sshd_config_authorized_principals_file = undef,
-  Optional[Ssh::Yes_no] $sshd_config_allowagentforwarding = undef,
+  Optional[Stdlib::Absolutepath] $ssh_package_adminfile = undef,
+  Optional[Stdlib::Absolutepath] $ssh_package_source = undef,
+  Boolean $ssh_sendenv = true,
+  Optional[Enum['yes','no','ask']] $ssh_strict_host_key_checking = undef,
 ) {
 
   if "${::ssh_version}" =~ /^OpenSSH/  { # lint:ignore:only_variable_string
@@ -270,10 +395,12 @@ class ssh (
   }
 
   if $manage_firewall == true {
-    firewall { '22 open port 22 for SSH':
-      action => 'accept',
-      dport  => 22,
-      proto  => 'tcp',
+      $sshd_config_port.each |$_port| {
+      firewall { "${_port} open port ${_port} for SSH":
+        action => 'accept',
+        dport  => $_port,
+        proto  => 'tcp',
+      }
     }
   }
 
