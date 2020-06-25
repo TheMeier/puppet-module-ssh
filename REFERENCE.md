@@ -25,7 +25,8 @@
 install and manage SSH server and client
 
 * **Note** default values for paramters are managed with hiera data, see files in the `data` directory.
-Paramters marked SSH_CONFIG(5) or SSHD_CONFIG(5) are directly used in the configuration as described by the corresponding openssh man page
+Paramters marked SSH_CONFIG(5) or SSHD_CONFIG(5) are directly used in the configuration as described
+by the corresponding openssh man page
 
 #### Examples
 
@@ -97,7 +98,7 @@ Default value: ['openssh-client', 'openssh-server']
 
 ##### `permit_root_login`
 
-Data type: `Enum['yes', 'without-password', 'forced-commands-only', 'no']`
+Data type: `Ssh::Permit_root_login`
 
 SSHD_CONFIG(5) PermitRootLogin
 
@@ -603,7 +604,8 @@ Default value: `undef`
 
 Data type: `Optional[Hash]`
 
-SSHD_CONFIG(5) Hash for matches with nested arrays for options for the Match directive for the SSH daemon. Match directive is supported on SSH >= 5.x.
+SSHD_CONFIG(5) Hash for matches with nested arrays for options for the Match
+directive for the SSH daemon. Match directive is supported on SSH >= 5.x.
 
 Default value: `undef`
 
