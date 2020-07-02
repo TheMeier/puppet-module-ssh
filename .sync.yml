@@ -3,8 +3,16 @@
 spec/spec_helper.rb:
   hiera_config: spec/fixtures/hiera/hiera.yaml
 
-spec/default_facts.yml.erb:
+spec/default_facts.yml:
   extra_facts:
-    ssh_version: 'OpenSSH_6.6.1p1'
-    root_home: '/root'
+    ssh_version: OpenSSH_6.6.1p1
+    root_home: /root
 
+.travis.yml:
+  use_litmus: true
+
+Gemfile:
+  required:
+    ':development':
+      - gem: facterdb
+        version: '>= 1.4.0'

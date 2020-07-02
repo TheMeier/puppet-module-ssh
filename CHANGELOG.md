@@ -1,5 +1,16 @@
 # Change log
 
+## [v4.0.2](https://github.com/TheMeier/puppet-module-ssh/tree/v4.0.2) (2020-06-02)
+
+[Full Changelog](https://github.com/TheMeier/puppet-module-ssh/compare/v4.0.1...v4.0.2)
+
+### Changed
+
+- update pdk templates
+- add empty hash to `data/common.yaml` (PDK-1633)
+- drop puppet 5 support
+- use litmusimage in acceptance test
+
 ## [v4.0.1](https://github.com/TheMeier/puppet-module-ssh/tree/v4.0.1) (2019-09-13)
 
 [Full Changelog](https://github.com/TheMeier/puppet-module-ssh/compare/v4.0.0...v4.0.1)
