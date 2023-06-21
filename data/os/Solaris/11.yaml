@@ -1,6 +1,0 @@
----
-
-ssh::packages:
-  - 'network/ssh'
-  - 'network/ssh/ssh-key'
-  - 'service/network/ssh'

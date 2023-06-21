@@ -1,3 +1,0 @@
----
-
-ssh::sshd_config_subsystem_sftp: '/usr/lib64/ssh/sftp-server'

@@ -2,6 +2,7 @@
 
 spec/spec_helper.rb:
   hiera_config: spec/fixtures/hiera/hiera.yaml
+  coverage_report: true
 
 spec/default_facts.yml:
   extra_facts:
@@ -9,10 +10,20 @@ spec/default_facts.yml:
     root_home: /root
 
 .travis.yml:
-  use_litmus: true
-
-Gemfile:
-  required:
-    ':development':
-      - gem: facterdb
-        version: '>= 1.4.0'
+  delete: true
+".gitlab-ci.yml":
+  delete: true
+appveyor.yml:
+  delete: true
+.gitpod.Dockerfile:
+  unmanaged: false
+.gitpod.yml:
+  unmanaged: false
+.github/workflows/auto_release.yml:
+  unmanaged: false
+.github/workflows/ci.yml:
+  unmanaged: true
+.github/workflows/nightly.yml:
+  unmanaged: false
+.github/workflows/release.yml:
+  unmanaged: false
