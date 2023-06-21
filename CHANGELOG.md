@@ -1,5 +1,16 @@
 # Change log
 
+## [v5.0.0](https://github.com/TheMeier/puppet-module-ssh/tree/v5.0.0) (2023-06-21)
+[Full Changelog](https://github.com/TheMeier/puppet-module-ssh/compare/v4.0.2...v5.0.0)
+
+### Changed
+- update pdk templates
+- Allow ssh-ed25519 hostkeys
+
+## Breaking changes
+- drop puppet 6 support
+- drop all OS support except for Debian
+
 ## [v4.0.2](https://github.com/TheMeier/puppet-module-ssh/tree/v4.0.2) (2020-06-02)
 
 [Full Changelog](https://github.com/TheMeier/puppet-module-ssh/compare/v4.0.1...v4.0.2)

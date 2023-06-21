@@ -25,7 +25,6 @@ define ssh::config_entry (
   Array[String]            $lines  = [],
   Variant[String, Integer] $order  = '10',
 ) {
-
   # All lines including the host line.  This will be joined with "\n  " for
   # indentation.
   $entry = concat(["Host ${host}"], $lines)

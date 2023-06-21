@@ -122,7 +122,7 @@
 # @param ssh_hostbasedauthentication SSH_CONFIG(5) HostbasedAuthentication
 # @param ssh_key_ensure enable/disable to export node sshkey resource
 # @param ssh_key_import enable/disable to import all exported node sshkey resources
-# @param ssh_key_type encryption type for SSH key. Valid values are 'ecdsa-sha2-nistp256', 'rsa', 'dsa', 'ssh-dss' and 'ssh-rsa'
+# @param ssh_key_type encryption type for SSH key.
 # @param ssh_package_adminfile adminfile paramter for package resources
 # @param ssh_package_source source paramter for package resources
 # @param ssh_sendenv enable/disable of SendEnv options for specifying environment variables
@@ -141,7 +141,7 @@ class ssh (
   Boolean $service_enable = true,
   String $service_ensure = 'running',
   Boolean $service_hasrestart = true,
-  Optional[Boolean] $service_hasstatus = true,
+  Boolean $service_hasstatus = true,
   String $service_name = 'sshd',
   Optional[Array[String]] $ssh_config_ciphers = undef,
   Optional[String] $ssh_config_forward_agent = undef,
@@ -192,7 +192,7 @@ class ssh (
   Optional[String] $sshd_config_forcecommand = undef,
   String $sshd_config_group = 'root',
   Optional[Array[Stdlib::Absolutepath]] $sshd_config_hostcertificate = undef,
-  Optional[Array[Stdlib::Absolutepath]] $sshd_config_hostkey = ['/etc/ssh/ssh_host_rsa_key'],
+  Array[Stdlib::Absolutepath] $sshd_config_hostkey = ['/etc/ssh/ssh_host_rsa_key'],
   Optional[Array[String]] $sshd_config_kexalgorithms = undef,
   Optional[Stdlib::Absolutepath] $sshd_config_key_revocation_list = undef,
   Enum['QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE'] $sshd_config_loglevel = 'INFO',
@@ -237,20 +237,19 @@ class ssh (
   Enum['yes','no'] $sshd_x11_forwarding = 'yes',
   Enum['yes','no'] $sshd_x11_use_localhost = 'yes',
   Optional[Enum['yes','no']] $ssh_enable_ssh_keysign = undef,
-  Optional[Enum['yes','no']] $ssh_gssapiauthentication = 'yes',
+  Enum['yes','no'] $ssh_gssapiauthentication = 'yes',
   Optional[Enum['yes','no']] $ssh_gssapidelegatecredentials = undef,
   Optional[Enum['yes','no']] $ssh_hostbasedauthentication = undef,
   String $ssh_key_ensure = 'present',
   Boolean $ssh_key_import = true,
-  String $ssh_key_type = 'ssh-rsa',
+  SSH::Key_type $ssh_key_type = 'ssh-rsa',
   Optional[Stdlib::Absolutepath] $ssh_package_adminfile = undef,
   Optional[Stdlib::Absolutepath] $ssh_package_source = undef,
   Boolean $ssh_sendenv = true,
   Optional[Enum['yes','no','ask']] $ssh_strict_host_key_checking = undef,
 ) {
-
-  if "${::ssh_version}" =~ /^OpenSSH/  { # lint:ignore:only_variable_string
-    $ssh_version_array = split($::ssh_version_numeric, '\.')
+  if "${facts['ssh_version']}" =~ /^OpenSSH/ { # lint:ignore:only_variable_string
+    $ssh_version_array = split($facts['ssh_version_numeric'], '\.')
     $ssh_version_maj_int = Integer($ssh_version_array[0])
     $ssh_version_min_int = Integer($ssh_version_array[1])
     if $ssh_version_maj_int > 5 {
@@ -261,7 +260,7 @@ class ssh (
       $default_ssh_config_use_roaming = 'unset'
     }
   } else {
-      $default_ssh_config_use_roaming = 'unset'
+    $default_ssh_config_use_roaming = 'unset'
   }
 
   if $ssh_config_use_roaming == undef {
@@ -280,23 +279,25 @@ class ssh (
     default:        { $sshd_config_hostcertificate_real = $sshd_config_hostcertificate }
   }
 
-
   if $sshd_banner_content != undef and $sshd_config_banner == undef {
     fail('ssh::sshd_config_banner must be set to be able to use sshd_banner_content.')
   }
 
   case $ssh_key_type {
     'ssh-rsa','rsa': {
-      $key = $::sshrsakey
+      $key = $facts['ssh']['rsa']['key']
     }
     'ssh-dsa','dsa': {
-      $key = $::sshdsakey
+      $key = $facts['ssh']['dsa']['key']
     }
     'ecdsa-sha2-nistp256': {
-          $key = $::sshecdsakey
+      $key = $facts['ssh']['ecdsa']['key']
+    }
+    'ssh-ed25519': {
+      $key = $facts['ssh']['ed25519']['key']
     }
     default: {
-      fail("ssh::ssh_key_type must be 'ecdsa-sha2-nistp256', 'ssh-rsa', 'rsa', 'ssh-dsa', or 'dsa' and is <${ssh_key_type}>.")
+      fail('ssh::ssh_key_type is invalid')
     }
   }
 
@@ -308,15 +309,15 @@ class ssh (
     $ssh_config_global_known_hosts_list_real = $ssh_config_global_known_hosts_file_real
   }
 
-  $supported_loglevel_vals=['QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE']
+  $supported_loglevel_vals= ['QUIET', 'FATAL', 'ERROR', 'INFO', 'VERBOSE']
 
   #enable hiera merging for groups, users, and config_entries
   if $hiera_merge == true {
-    $sshd_config_allowgroups_real = hiera_array('ssh::sshd_config_allowgroups',[])
-    $sshd_config_allowusers_real  = hiera_array('ssh::sshd_config_allowusers',[])
-    $sshd_config_denygroups_real  = hiera_array('ssh::sshd_config_denygroups',[])
-    $sshd_config_denyusers_real   = hiera_array('ssh::sshd_config_denyusers',[])
-    $config_entries_real          = hiera_hash('ssh::config_entries',{})
+    $sshd_config_allowgroups_real = hiera_array('ssh::sshd_config_allowgroups', [])
+    $sshd_config_allowusers_real  = hiera_array('ssh::sshd_config_allowusers', [])
+    $sshd_config_denygroups_real  = hiera_array('ssh::sshd_config_denygroups', [])
+    $sshd_config_denyusers_real   = hiera_array('ssh::sshd_config_denyusers', [])
+    $config_entries_real          = hiera_hash('ssh::config_entries', {})
   } else {
     $sshd_config_allowgroups_real = $sshd_config_allowgroups
     $sshd_config_allowusers_real  = $sshd_config_allowusers
@@ -331,7 +332,7 @@ class ssh (
     adminfile => $ssh_package_adminfile,
   }
 
-  file  { 'ssh_config' :
+  file { 'ssh_config' :
     ensure  => file,
     path    => $ssh_config_path,
     owner   => $ssh_config_owner,
@@ -341,7 +342,7 @@ class ssh (
     require => Package[$packages],
   }
 
-  file  { 'sshd_config' :
+  file { 'sshd_config' :
     ensure  => file,
     path    => $sshd_config_path,
     mode    => $sshd_config_mode,
@@ -364,10 +365,9 @@ class ssh (
   }
 
   if $manage_root_ssh_config == true {
-
     file { 'root_ssh_dir':
       ensure => directory,
-      path   => "${::root_home}/.ssh",
+      path   => "${facts['root_home']}/.ssh",
       owner  => 'root',
       group  => 'root',
       mode   => '0700',
@@ -375,7 +375,7 @@ class ssh (
 
     file { 'root_ssh_config':
       ensure  => file,
-      path    => "${::root_home}/.ssh/config",
+      path    => "${facts['root_home']}/.ssh/config",
       content => $root_ssh_config_content,
       owner   => 'root',
       group   => 'root',
@@ -395,7 +395,7 @@ class ssh (
   }
 
   if $manage_firewall == true {
-      $sshd_config_port.each |$_port| {
+    $sshd_config_port.each |$_port| {
       firewall { "${_port} open port ${_port} for SSH":
         action => 'accept',
         dport  => $_port,
@@ -408,12 +408,28 @@ class ssh (
   # corresponding $::ipaddress(6)? fact is not present. So, we cannot assume
   # these variables are defined. Getvar (Stdlib 4.13+, ruby 1.8.7+) handles
   # this correctly.
-  if getvar('::ipaddress') and getvar('::ipaddress6') { $host_aliases = [$::hostname, $::ipaddress, $::ipaddress6] }
-  elsif getvar('::ipaddress6') { $host_aliases = [$::hostname, $::ipaddress6] }
-  else { $host_aliases = [$::hostname, $::ipaddress] }
+  if getvar('::ipaddress') and getvar('::ipaddress6') {
+    $host_aliases = [
+      $facts['networking']['hostname'],
+      $facts['networking']['ip'],
+      $facts['networking']['ip6'],
+    ]
+  }
+  elsif getvar('::ipaddress6') {
+    $host_aliases = [
+      $facts['networking']['hostname'],
+      $facts['networking']['ip6'],
+    ]
+  }
+  else {
+    $host_aliases = [
+      $facts['networking']['hostname'],
+      $facts['networking']['ip'],
+    ]
+  }
 
   # export each node's ssh key
-  @@sshkey { $::fqdn :
+  @@sshkey { $facts['networking']['fqdn'] :
     ensure       => $ssh_key_ensure,
     host_aliases => $host_aliases,
     type         => $ssh_key_type,
@@ -437,7 +453,7 @@ class ssh (
   }
 
   # remove ssh key's not managed by puppet
-  resources  { 'sshkey':
+  resources { 'sshkey':
     purge => $purge_keys,
   }
 

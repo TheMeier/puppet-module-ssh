@@ -8,4 +8,3 @@ is_pe: false
 macaddress: "AA:AA:AA:AA:AA:AA"
 ssh_version: OpenSSH_6.6.1p1
 root_home: "/root"
-
