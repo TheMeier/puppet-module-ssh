@@ -1,3 +1,6 @@
+# This module is no longer maintained. Please switch to an alternative module e.g. https://forge.puppet.com/modules/saz/ssh or https://forge.puppet.com/modules/ghoneycutt/ssh
+
+
 # puppet-module-ssh
 
 Manage ssh client and server.
